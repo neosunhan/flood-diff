@@ -14,7 +14,10 @@ Different configuration options for training and testing of models are listed in
 python sr.py -p train -c config.json -output-dir path/to/output/dir
 ```
 
-
+## Testing
+```
+python sr.py -p test -c config.json -output-dir path/to/output/dir
+```
 
 ## Acknowledgements
 
