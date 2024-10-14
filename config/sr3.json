@@ -1,0 +1,95 @@
+{
+    "name": "sr3",
+    "phase": "train",
+    "distributed": false,
+    "path": {
+        "log": "logs",
+        "tb_logger": "tb_logger",
+        "results": "results",
+        "checkpoint": "checkpoint",
+        "resume_state": "prelim_400k/checkpoint/I400000_E92"
+    },
+    "datasets": {
+        "meta": {
+            "max_depth": 3200,
+            "dem_max_value": 135,
+            "dem_min_value": -20
+        },
+        "train": {
+            "catchment": "Wollombi",
+            "dataroot": "../data/wollombi",
+            "batch_size": 8,
+            "num_workers": 1,
+            "use_shuffle": true,
+            "data_len": -1
+        },
+        "test": {
+            "catchment": "Wollombi",
+            "dataroot": "../data/wollombi",
+            "batch_size": 8,
+            "use_shuffle": true,
+            "data_len": 1000
+        }
+    },
+    "model": {
+        "which_model_G": "sr3",
+        "finetune_norm": false,
+        "unet": {
+            "in_channel": 3,
+            "out_channel": 1,
+            "inner_channel": 64,
+            "norm_groups": 16,
+            "channel_multiplier": [
+                1,
+                2,
+                4,
+                8,
+                8,
+                16,
+                16
+            ],
+            "attn_res": [
+                16
+            ],
+            "res_blocks": 3,
+            "dropout": 0
+        },
+        "beta_schedule": {
+            "train": {
+                "schedule": "linear",
+                "n_timestep": 2000,
+                "linear_start": 1e-6,
+                "linear_end": 1e-2
+            },
+            "test": {
+                "schedule": "linear",
+                "n_timestep": 2000,
+                "linear_start": 1e-6,
+                "linear_end": 1e-2
+            }
+        },
+        "diffusion": {
+            "image_size": 512,
+            "channels": 1,
+            "conditional": true 
+        }
+    },
+    "train": {
+        "n_iter": 400000,
+        "val_freq": 5e4,
+        "save_checkpoint_freq": 5e4,
+        "print_freq": 500,
+        "optimizer": {
+            "type": "adam",
+            "lr": 1e-6
+        },
+        "ema_scheduler": {
+            "step_start_ema": 5000,
+            "update_ema_every": 1,
+            "ema_decay": 0.9999
+        }
+    },
+    "wandb": {
+        "project": "no_project"
+    }
+}
