@@ -9,43 +9,31 @@ pip install -r requirements.txt
 ## Config
 Different configuration options for training and testing of models are listed in `config.json`. See `config` directory for examples of config files.
 
-## Data
-Data folder should follow this structure relative to location of `sr.py`
+## Catchment data structure
+Catchment data should be stored in this folder structure:
 ```
 .
-├── flood-diff/
-│   ├── data/
-│   ├── sr.py
-│   └── ...
-└── data/
-    ├── catchment_1/
-    │   ├── train_hr/
-    │   │   ├── Box_1_Depth_2021_03_18_00_00_00.tiff
-    │   │   ├── Box_1_Depth_2021_03_18_00_30_00.tiff
-    │   │   └── ...
-    │   ├── train_lr/
-    │   │   ├── Box_1_Depth_2021_03_18_00_00_00.tiff
-    │   │   ├── Box_1_Depth_2021_03_18_00_30_00.tiff
-    │   │   └── ...
-    │   ├── test_hr/
-    │   │   ├── Box_1_Depth_2015_04_21_00_00_00.tiff
-    │   │   ├── Box_1_Depth_2015_04_21_00_30_00.tiff
-    │   │   └── ...
-    │   ├── test_lr/
-    │   │   ├── Box_1_Depth_2015_04_21_00_00_00.tiff
-    │   │   ├── Box_1_Depth_2015_04_21_00_30_00.tiff
-    │   │   └── ...
-    │   └── cropped_dems/
-    │       ├── BOX_1_DEM.tiff
-    │       ├── BOX_2_DEM.tiff
-    │       └── ...
-    ├── catchment_2/
-    │   ├── train_hr/
-    │   ├── train_lr/
-    │   ├── test_hr/
-    │   ├── test_lr/
-    │   └── cropped_dems/
-    └── ...
+└── catchment_name/
+    ├── train_hr/
+    │   ├── Box_1_Depth_2021_03_18_00_00_00.tiff
+    │   ├── Box_1_Depth_2021_03_18_00_30_00.tiff
+    │   └── ...
+    ├── train_lr/
+    │   ├── Box_1_Depth_2021_03_18_00_00_00.tiff
+    │   ├── Box_1_Depth_2021_03_18_00_30_00.tiff
+    │   └── ...
+    ├── test_hr/
+    │   ├── Box_1_Depth_2015_04_21_00_00_00.tiff
+    │   ├── Box_1_Depth_2015_04_21_00_30_00.tiff
+    │   └── ...
+    ├── test_lr/
+    │   ├── Box_1_Depth_2015_04_21_00_00_00.tiff
+    │   ├── Box_1_Depth_2015_04_21_00_30_00.tiff
+    │   └── ...
+    └── cropped_dems/
+        ├── BOX_1_DEM.tiff
+        ├── BOX_2_DEM.tiff
+        └── ...
 ```
 
 ## Training
