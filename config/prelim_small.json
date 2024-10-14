@@ -1,5 +1,5 @@
 {
-    "name": "sr3",
+    "name": "prelim_small",
     "phase": "train",
     "distributed": false,
     "path": {
@@ -7,7 +7,7 @@
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": "prelim_400k/checkpoint/I400000_E92"
+        "resume_state": "prelim_small/checkpoint/I400000_E92"
     },
     "datasets": {
         "meta": {
@@ -24,11 +24,11 @@
             "data_len": -1
         },
         "test": {
-            "catchment": "Wollombi",
-            "dataroot": "../data/wollombi",
+            "catchment": "Wollombi_1k",
+            "dataroot": "../data/wollombi_1k",
             "batch_size": 8,
             "use_shuffle": true,
-            "data_len": 1000
+            "data_len": -1
         }
     },
     "model": {
@@ -44,12 +44,10 @@
                 2,
                 4,
                 8,
-                8,
-                16,
                 16
             ],
             "attn_res": [
-                16
+                32
             ],
             "res_blocks": 3,
             "dropout": 0
@@ -75,10 +73,10 @@
         }
     },
     "train": {
-        "n_iter": 800000,
+        "n_iter": 400000,
         "val_freq": 5e4,
         "save_checkpoint_freq": 5e4,
-        "print_freq": 1000,
+        "print_freq": 500,
         "optimizer": {
             "type": "adam",
             "lr": 1e-6

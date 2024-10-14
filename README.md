@@ -1,7 +1,7 @@
 # Physics Informed Generative AI for High Resolution Flood mapping
 
 ## Requirements
-Python 3.10.5+
+Python 3.10.12+
 ```
 pip install -r requirements.txt
 ```
