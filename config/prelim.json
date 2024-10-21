@@ -7,7 +7,7 @@
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": "prelim/checkpoint/I400000_E92"
+        "resume_state": "prelim/checkpoint/I800000_E183"
     },
     "datasets": {
         "meta": {

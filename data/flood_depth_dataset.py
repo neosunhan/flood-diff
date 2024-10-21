@@ -5,7 +5,7 @@ import torch
 import numpy as np
 
 class FloodDepthDatasetWithDEM(Dataset):
-    def __init__(self, low_res_folder, high_res_folder, dem_folder, max_value, max_value_dem, min_value_dem, transform=None, data_len=-1):
+    def __init__(self, low_res_folder, high_res_folder, dem_folder, max_value, max_value_dem, min_value_dem, transform=None, data_len=-1, norm_range=(-1, 1)):
         self.low_res_folder = low_res_folder
         self.high_res_folder = high_res_folder
         self.dem_folder = dem_folder
@@ -13,6 +13,7 @@ class FloodDepthDatasetWithDEM(Dataset):
         self.max_value_dem = max_value_dem
         self.min_value_dem = min_value_dem
         self.transform = transform
+        self.norm_range = norm_range
         self.filenames = [f for f in os.listdir(high_res_folder) if os.path.isfile(os.path.join(high_res_folder, f))]  
         if data_len != -1:
             self.filenames = self.filenames[:data_len]
@@ -27,12 +28,14 @@ class FloodDepthDatasetWithDEM(Dataset):
         dem_name = get_dem_name[0] + "_" + get_dem_name[1] + "_DEM.tiff"
         dem_path = os.path.join(self.dem_folder, dem_name)
         with rasterio.open(low_res_path) as src:
-            low_res_image = src.read(1).astype(np.float32) / self.max_value
+            low_res_image = src.read(1).astype(np.float32)
+            low_res_image = (self.norm_range[1] - self.norm_range[0]) * (low_res_image / self.max_value) + self.norm_range[0]
         with rasterio.open(high_res_path) as src:
-            high_res_image = src.read(1).astype(np.float32) / self.max_value
+            high_res_image = src.read(1).astype(np.float32)
+            high_res_image = (self.norm_range[1] - self.norm_range[0]) * (high_res_image / self.max_value) + self.norm_range[0]
         with rasterio.open(dem_path) as src:
             dem_image = src.read(1).astype(np.float32)
-            dem_image = (dem_image - self.min_value_dem) / (self.max_value_dem - self.min_value_dem)
+            dem_image = (self.norm_range[1] - self.norm_range[0]) * (dem_image - self.min_value_dem) / (self.max_value_dem - self.min_value_dem) + self.norm_range[0]
         low_res_image = torch.from_numpy(low_res_image).unsqueeze(0)
         high_res_image = torch.from_numpy(high_res_image).unsqueeze(0)
         dem_tensor = torch.from_numpy(dem_image).unsqueeze(0)

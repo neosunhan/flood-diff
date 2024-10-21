@@ -1,5 +1,5 @@
 {
-    "name": "prelim_small",
+    "name": "burnett-5",
     "phase": "train",
     "distributed": false,
     "path": {
@@ -7,25 +7,27 @@
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": "prelim_small/checkpoint/I400000_E92"
+        "resume_state": null
     },
     "datasets": {
         "meta": {
             "max_depth": 3200,
-            "dem_max_value": 135,
-            "dem_min_value": -20
+            "dem_max_value": 440,
+            "dem_min_value": -20,
+            "norm_min": -1,
+            "norm_max": 1
         },
         "train": {
-            "catchment": "Wollombi",
-            "dataroot": "../data/wollombi",
+            "catchment": "Burnett",
+            "dataroot": "../data/burnett",
             "batch_size": 8,
             "num_workers": 1,
             "use_shuffle": true,
             "data_len": -1
         },
         "test": {
-            "catchment": "Chowilla 1k",
-            "dataroot": "../data/chowilla_1k",
+            "catchment": "Burnett 1k",
+            "dataroot": "../data/burnett_1k",
             "batch_size": 8,
             "use_shuffle": true,
             "data_len": -1

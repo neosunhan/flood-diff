@@ -46,7 +46,8 @@ def create_dataset(dataset_opt, phase, meta):
         max_value=meta["max_depth"],
         max_value_dem=meta["dem_max_value"],
         min_value_dem=meta["dem_min_value"],
-        data_len=dataset_opt["data_len"]
+        data_len=dataset_opt["data_len"],
+        norm_range=(meta["norm_min"], meta["norm_max"])
     )
     logger = logging.getLogger('base')
     logger.info(f"Dataset [{dataset.__class__.__name__} - {dataset_opt['catchment']} ({phase})] is created.")
