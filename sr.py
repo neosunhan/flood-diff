@@ -114,8 +114,8 @@ if __name__ == "__main__":
                         loss_input = mse_loss(visuals['INF'].squeeze(), visuals['HR'].squeeze())
                         loss_predicted = mse_loss(visuals['SR'].squeeze().clamp(0, 1), visuals['HR'].squeeze())
 
-                        loss_input_batch = loss_input.item() * len(visuals['INF']) / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"] * opt["datasets"]["meta"]["max_depth"])
-                        loss_predicted_batch = loss_predicted.item() * len(visuals['INF']) / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"] * opt["datasets"]["meta"]["max_depth"])
+                        loss_input_batch = loss_input.item() / 4 * len(visuals['INF']) / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"] * opt["datasets"]["meta"]["max_depth"])
+                        loss_predicted_batch = loss_predicted.item() / 4 * len(visuals['INF']) / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"] * opt["datasets"]["meta"]["max_depth"])
 
                         avg_mse_input += loss_input_batch
                         avg_mse_predicted += loss_predicted_batch
@@ -152,8 +152,8 @@ if __name__ == "__main__":
                     logger.info(f"# Validation # MSE (Input to Target): {avg_mse_input:.4f}")
                     logger.info(f"# Validation # MSE (Prediction to Target): {avg_mse_predicted:.4f}")
                     logger_test = logging.getLogger('test')  # validation logger
-                    logger_test.info('<epoch:{:3d}, iter:{:8,d}> psnr: {:.4e}'.format(
-                        current_epoch, current_step, avg_psnr))
+                    # logger_test.info('<epoch:{:3d}, iter:{:8,d}> psnr: {:.4e}'.format(
+                    #     current_epoch, current_step, avg_psnr))
                     # tensorboard logger
                     tb_logger.add_scalar('psnr', avg_psnr, current_step)
 
@@ -180,8 +180,8 @@ if __name__ == "__main__":
         logger.info('Begin Model Evaluation.')
         avg_psnr = 0.0
         avg_ssim = 0.0
-        avg_mse_input, avg_mse_predicted = 0.0, 0.0
-        mse_loss = torch.nn.MSELoss()
+        total_mse_input, total_mse_predicted = 0.0, 0.0
+        mse_loss_sum = torch.nn.MSELoss(reduction="sum")
         idx = 0
         result_path = '{}'.format(opt['path']['results'])
         
@@ -192,14 +192,11 @@ if __name__ == "__main__":
             diffusion.test(continous=False)
             visuals = diffusion.get_current_visuals()
 
-            loss_input = mse_loss(visuals['INF'].squeeze(), visuals['HR'].squeeze())
-            loss_predicted = mse_loss(visuals['SR'].squeeze().clamp(0, 1), visuals['HR'].squeeze())
+            loss_input = mse_loss_sum(visuals['INF'].squeeze(), visuals['HR'].squeeze())
+            loss_predicted = mse_loss_sum(visuals['SR'].squeeze().clamp(0, 1), visuals['HR'].squeeze())
 
-            loss_input_batch = loss_input.item() * len(visuals['INF']) / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"] * opt["datasets"]["meta"]["max_depth"])
-            loss_predicted_batch = loss_predicted.item() * len(visuals['INF']) / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"] * opt["datasets"]["meta"]["max_depth"])
-
-            avg_mse_input += loss_input_batch
-            avg_mse_predicted += loss_predicted_batch
+            total_mse_input += loss_input.item()
+            total_mse_predicted += loss_predicted.item()
 
             # logger.info(f"Batch {idx}, Input MSE: {loss_input_batch}, Predicted MSE: {loss_predicted_batch}")
 
@@ -238,12 +235,14 @@ if __name__ == "__main__":
         # avg_ssim = avg_ssim / idx
         # avg_mse_input = avg_mse_input / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"] ** 2)
         # avg_mse_predicted = avg_mse_predicted / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"] ** 2)
+        total_mse_input = total_mse_input / 4 / (opt["model"]["diffusion"]["channels"] * opt["model"]["diffusion"]["image_size"]**2) / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"]**2)
+        total_mse_predicted = total_mse_predicted / 4 / (opt["model"]["diffusion"]["channels"] * opt["model"]["diffusion"]["image_size"]**2) / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"]**2)
 
         # log
         # logger.info('# Validation # PSNR: {:.4e}'.format(avg_psnr))
         # logger.info('# Validation # SSIM: {:.4e}'.format(avg_ssim))
-        logger.info(f"# Validation # MSE (Input to Target): {avg_mse_input:.4f}")
-        logger.info(f"# Validation # MSE (Prediction to Target): {avg_mse_predicted:.4f}")
+        logger.info(f"# Validation # MSE (LR to HR): {total_mse_input:.4f}")
+        logger.info(f"# Validation # MSE (SR to HR): {total_mse_predicted:.4f}")
         logger_test = logging.getLogger('test')  # validation logger
         # logger_test.info(f'<epoch:{current_epoch:3d}, iter:{current_step:8,d}> psnr: {avg_psnr:.4e}, ssim：{avg_ssim:.4e}')
 

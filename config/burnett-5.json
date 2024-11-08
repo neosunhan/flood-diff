@@ -7,7 +7,7 @@
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": null
+        "resume_state": "burnett-5/checkpoint/I700000_E64"
     },
     "datasets": {
         "meta": {
@@ -75,13 +75,13 @@
         }
     },
     "train": {
-        "n_iter": 400000,
+        "n_iter": 700000,
         "val_freq": 5e4,
         "save_checkpoint_freq": 5e4,
         "print_freq": 1000,
         "optimizer": {
             "type": "adam",
-            "lr": 1e-6
+            "lr": 1e-7
         },
         "ema_scheduler": {
             "step_start_ema": 5000,
