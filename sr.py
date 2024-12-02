@@ -114,11 +114,8 @@ if __name__ == "__main__":
                         loss_input = mse_loss(visuals['INF'].squeeze(), visuals['HR'].squeeze())
                         loss_predicted = mse_loss(visuals['SR'].squeeze().clamp(0, 1), visuals['HR'].squeeze())
 
-                        loss_input_batch = loss_input.item() / 4 * len(visuals['INF']) / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"] * opt["datasets"]["meta"]["max_depth"])
-                        loss_predicted_batch = loss_predicted.item() / 4 * len(visuals['INF']) / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"] * opt["datasets"]["meta"]["max_depth"])
-
-                        avg_mse_input += loss_input_batch
-                        avg_mse_predicted += loss_predicted_batch
+                        avg_mse_input += loss_input.item()
+                        avg_mse_predicted += loss_predicted.item()
 
                         # sr_img = Metrics.tensor2img(visuals['SR'])  # uint8
                         # hr_img = Metrics.tensor2img(visuals['HR'])  # uint8
@@ -144,8 +141,8 @@ if __name__ == "__main__":
                         #     )
 
                     # avg_psnr = avg_psnr / idx
-                    # avg_mse_input = avg_mse_input / idx * (opt["datasets"]["meta"]["max_depth"] ** 2)
-                    # avg_mse_predicted = avg_mse_predicted / idx * (opt["datasets"]["meta"]["max_depth"] ** 2)
+                    avg_mse_input = avg_mse_input / 4 / (opt["model"]["diffusion"]["channels"] * opt["model"]["diffusion"]["image_size"]**2) / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"]**2)
+                    avg_mse_predicted = avg_mse_predicted / 4 / (opt["model"]["diffusion"]["channels"] * opt["model"]["diffusion"]["image_size"]**2) / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"]**2)
                     diffusion.set_new_noise_schedule(opt['model']['beta_schedule']['train'], schedule_phase='train')
                     # log
                     # logger.info('# Validation # PSNR: {:.4e}'.format(avg_psnr))
@@ -178,16 +175,13 @@ if __name__ == "__main__":
         logger.info('End of training.')
     else:
         logger.info('Begin Model Evaluation.')
-        avg_psnr = 0.0
-        avg_ssim = 0.0
+        avg_psnr, avg_ssim = 0.0, 0.0
         total_mse_input, total_mse_predicted = 0.0, 0.0
         mse_loss_sum = torch.nn.MSELoss(reduction="sum")
-        idx = 0
         result_path = '{}'.format(opt['path']['results'])
         
         logger.info(f"Num test batches: {len(test_loader)}")
-        for val_data in test_loader:
-            idx += 1
+        for val_data in tqdm(test_loader, desc=f"Test batch"):
             diffusion.feed_data(val_data)
             diffusion.test(continous=False)
             visuals = diffusion.get_current_visuals()
@@ -197,8 +191,6 @@ if __name__ == "__main__":
 
             total_mse_input += loss_input.item()
             total_mse_predicted += loss_predicted.item()
-
-            # logger.info(f"Batch {idx}, Input MSE: {loss_input_batch}, Predicted MSE: {loss_predicted_batch}")
 
             # hr_img = Metrics.tensor2img(visuals['HR'])  # uint8
             # lr_img = Metrics.tensor2img(visuals['LR'])  # uint8
@@ -233,8 +225,6 @@ if __name__ == "__main__":
 
         # avg_psnr = avg_psnr / idx
         # avg_ssim = avg_ssim / idx
-        # avg_mse_input = avg_mse_input / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"] ** 2)
-        # avg_mse_predicted = avg_mse_predicted / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"] ** 2)
         total_mse_input = total_mse_input / 4 / (opt["model"]["diffusion"]["channels"] * opt["model"]["diffusion"]["image_size"]**2) / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"]**2)
         total_mse_predicted = total_mse_predicted / 4 / (opt["model"]["diffusion"]["channels"] * opt["model"]["diffusion"]["image_size"]**2) / len(test_loader.dataset) * (opt["datasets"]["meta"]["max_depth"]**2)
 

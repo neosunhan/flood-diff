@@ -1,5 +1,5 @@
 {
-    "name": "burnett-5",
+    "name": "burnett-7",
     "phase": "train",
     "distributed": false,
     "path": {
@@ -7,7 +7,7 @@
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": "burnett-5/checkpoint/I700000_E64"
+        "resume_state": "burnett-7/checkpoint/I800000_E72"
     },
     "datasets": {
         "meta": {
@@ -46,10 +46,12 @@
                 2,
                 4,
                 8,
+                8,
+                16,
                 16
             ],
             "attn_res": [
-                32
+                16
             ],
             "res_blocks": 3,
             "dropout": 0
@@ -76,13 +78,13 @@
         }
     },
     "train": {
-        "n_iter": 950000,
+        "n_iter": 800000,
         "val_freq": 5e4,
         "save_checkpoint_freq": 5e4,
         "print_freq": 1000,
         "optimizer": {
             "type": "adam",
-            "lr": 3e-7
+            "lr": 1e-6
         },
         "ema_scheduler": {
             "step_start_ema": 5000,
