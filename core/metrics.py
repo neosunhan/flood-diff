@@ -1,8 +1,18 @@
-import os
+import affine
 import math
 import numpy as np
 import cv2
+import rasterio
+import json
 from torchvision.utils import make_grid
+
+
+def tensor2floodmap(tensor, max_depth, threshold, out_type=np.int16, min_max=(-1, 1)):
+    flood_map = (tensor - min_max[0]) / (min_max[1] - min_max[0]) * max_depth
+    flood_map = flood_map.cpu().detach().numpy()
+    flood_map = np.where(flood_map < threshold, 0, flood_map)
+    flood_map = flood_map.astype(out_type)
+    return flood_map
 
 
 def tensor2img(tensor, out_type=np.uint8, min_max=(-1, 1)):
@@ -32,6 +42,14 @@ def tensor2img(tensor, out_type=np.uint8, min_max=(-1, 1)):
         img_np = (img_np * 255.0).round()
         # Important. Unlike matlab, numpy.unit8() WILL NOT round by default.
     return img_np.astype(out_type)
+
+
+def save_flood_map(flood_map, save_path, profile_str):
+    profile = json.loads(profile_str)
+    profile["crs"] = rasterio.crs.CRS.from_string(profile["crs"])
+    profile["transform"] = affine.Affine.from_gdal(*profile["transform"])
+    with rasterio.open(save_path, 'w', **profile) as dst:
+        dst.write(flood_map, 1)
 
 
 def save_img(img, img_path, mode='RGB'):

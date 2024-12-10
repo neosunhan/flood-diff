@@ -3,6 +3,7 @@ import os
 import rasterio
 import torch
 import numpy as np
+import json
 
 class FloodDepthDatasetWithDEM(Dataset):
     def __init__(self, low_res_folder, high_res_folder, dem_folder, max_value, max_value_dem, min_value_dem, transform=None, data_len=-1, norm_range=(-1, 1)):
@@ -31,6 +32,9 @@ class FloodDepthDatasetWithDEM(Dataset):
             low_res_image = src.read(1).astype(np.float32)
             low_res_image = (self.norm_range[1] - self.norm_range[0]) * (low_res_image / self.max_value) + self.norm_range[0]
         with rasterio.open(high_res_path) as src:
+            profile = dict(src.profile)
+            profile["crs"] = profile["crs"].to_string()
+            profile["transform"] = profile["transform"].to_gdal()
             high_res_image = src.read(1).astype(np.float32)
             high_res_image = (self.norm_range[1] - self.norm_range[0]) * (high_res_image / self.max_value) + self.norm_range[0]
         with rasterio.open(dem_path) as src:
@@ -44,6 +48,8 @@ class FloodDepthDatasetWithDEM(Dataset):
             high_res_image = self.transform(high_res_image)
         # return low_res_image, high_res_image, dem_tensor, self.filenames[idx]
         return {
+            "filename": self.filenames[idx],
+            "profile": json.dumps(profile),
             "SR": low_res_image,
             "HR": high_res_image,
             "DEM": dem_tensor,

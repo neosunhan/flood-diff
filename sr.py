@@ -8,8 +8,8 @@ import core.metrics as Metrics
 from core.wandb_logger import WandbLogger
 from tqdm import tqdm
 from tensorboardX import SummaryWriter
+from torch.nn.parallel import DataParallel
 import os
-import numpy as np
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -63,6 +63,10 @@ if __name__ == "__main__":
 
     # model
     diffusion = Model.create_model(opt)
+    num_gpus = torch.cuda.device_count()
+    if num_gpus > 1:
+        logger.info(f"Using {num_gpus} GPUs")
+        diffusion = DataParallel(diffusion)
     logger.info('Initial Model Finished')
 
     # Train
@@ -110,9 +114,13 @@ if __name__ == "__main__":
                         diffusion.feed_data(val_data)
                         diffusion.test(continous=False)
                         visuals = diffusion.get_current_visuals()
+                        sr_image = visuals['SR'].squeeze().clamp(
+                            opt["datasets"]["meta"]["norm_min"], 
+                            opt["datasets"]["meta"]["norm_max"]
+                        )
 
                         loss_input = mse_loss(visuals['INF'].squeeze(), visuals['HR'].squeeze())
-                        loss_predicted = mse_loss(visuals['SR'].squeeze().clamp(0, 1), visuals['HR'].squeeze())
+                        loss_predicted = mse_loss(sr_image, visuals['HR'].squeeze())
 
                         avg_mse_input += loss_input.item()
                         avg_mse_predicted += loss_predicted.item()
@@ -178,16 +186,20 @@ if __name__ == "__main__":
         avg_psnr, avg_ssim = 0.0, 0.0
         total_mse_input, total_mse_predicted = 0.0, 0.0
         mse_loss_sum = torch.nn.MSELoss(reduction="sum")
-        result_path = '{}'.format(opt['path']['results'])
+        result_path = opt['path']['results']
         
         logger.info(f"Num test batches: {len(test_loader)}")
         for val_data in tqdm(test_loader, desc=f"Test batch"):
             diffusion.feed_data(val_data)
             diffusion.test(continous=False)
             visuals = diffusion.get_current_visuals()
+            sr_image = visuals['SR'].squeeze().clamp(
+                opt["datasets"]["meta"]["norm_min"], 
+                opt["datasets"]["meta"]["norm_max"]
+            )
 
             loss_input = mse_loss_sum(visuals['INF'].squeeze(), visuals['HR'].squeeze())
-            loss_predicted = mse_loss_sum(visuals['SR'].squeeze().clamp(0, 1), visuals['HR'].squeeze())
+            loss_predicted = mse_loss_sum(sr_image, visuals['HR'].squeeze())
 
             total_mse_input += loss_input.item()
             total_mse_predicted += loss_predicted.item()
@@ -208,6 +220,25 @@ if __name__ == "__main__":
             #     sr_img = Metrics.tensor2img(visuals['SR'])  # uint8
             #     Metrics.save_img(sr_img, '{}/{}_{}_sr_process.png'.format(result_path, current_step, idx))
             #     Metrics.save_img(Metrics.tensor2img(visuals['SR'][-1]), '{}/{}_{}_sr.png'.format(result_path, current_step, idx))
+
+            if opt["test"]["save_results"]:
+                # logger.info(f"sr_image shape: {sr_image.shape}")
+                sr_flood_map = Metrics.tensor2floodmap(
+                    sr_image, 
+                    opt["datasets"]["meta"]["max_depth"], 
+                    opt["test"]["threshold"], 
+                    min_max=(opt["datasets"]["meta"]["norm_min"], opt["datasets"]["meta"]["norm_max"])
+                )
+                # logger.info(f"sr_flood_map shape: {sr_flood_map.shape}")
+
+                filenames = visuals['filenames']
+                profiles = visuals['profiles']
+                # logger.info(f"filenames: {filenames}, {type(filenames)}")
+                # logger.info(f"profiles: {profiles}, {type(profiles)}")
+                for i in range(opt["datasets"]["test"]["batch_size"]):
+                    filename = filenames[i]
+                    # logger.info(f"image: {filename}")
+                    Metrics.save_flood_map(sr_flood_map[i], os.path.join(result_path, filename), profiles[i])
 
             # Metrics.save_img(hr_img, '{}/{}_{}_hr.png'.format(result_path, current_step, idx))
             # Metrics.save_img(lr_img, '{}/{}_{}_lr.png'.format(result_path, current_step, idx))

@@ -7,7 +7,7 @@
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": null
+        "resume_state": "wollombi-5/checkpoint/I200000_E46"
     },
     "datasets": {
         "meta": {
@@ -76,13 +76,13 @@
         }
     },
     "train": {
-        "n_iter": 200000,
+        "n_iter": 400000,
         "val_freq": 5e4,
         "save_checkpoint_freq": 1e5,
         "print_freq": 1000,
         "optimizer": {
             "type": "adam",
-            "lr": 1e-6
+            "lr": 1e-5
         },
         "ema_scheduler": {
             "step_start_ema": 5000,

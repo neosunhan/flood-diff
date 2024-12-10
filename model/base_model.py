@@ -28,11 +28,11 @@ class BaseModel():
     def set_device(self, x):
         if isinstance(x, dict):
             for key, item in x.items():
-                if item is not None:
+                if item is not None and type(item) == torch.Tensor:
                     x[key] = item.to(self.device)
         elif isinstance(x, list):
             for item in x:
-                if item is not None:
+                if item is not None and type(item) == torch.Tensor:
                     item = item.to(self.device)
         else:
             x = x.to(self.device)

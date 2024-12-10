@@ -94,6 +94,8 @@ class DDPM(BaseModel):
 
     def get_current_visuals(self, need_LR=True, sample=False):
         out_dict = OrderedDict()
+        out_dict["filenames"] = self.data['filename']
+        out_dict["profiles"] = self.data['profile']
         if sample:
             out_dict['SAM'] = self.SR.detach().float().cpu()
         else:
