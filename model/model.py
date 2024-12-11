@@ -111,22 +111,18 @@ class DDPM(BaseModel):
     def print_network(self):
         s, n = self.get_network_description(self.netG)
         if isinstance(self.netG, nn.DataParallel):
-            net_struc_str = '{} - {}'.format(self.netG.__class__.__name__,
-                                             self.netG.module.__class__.__name__)
+            net_struc_str = f'{self.netG.__class__.__name__} - {self.netG.module.__class__.__name__}'
         else:
-            net_struc_str = '{}'.format(self.netG.__class__.__name__)
+            net_struc_str = '{self.netG.__class__.__name__}'
 
-        logger.info(
-            'Network G structure: {}, with parameters: {:,d}'.format(net_struc_str, n))
+        logger.info(f'Network G structure: {net_struc_str}, with parameters: {n:,d}')
         logger.info(s)
 
     def save_network(self, epoch, iter_step):
         if (iter_step, epoch) in self.saved_checkpoints:
             return
-        gen_path = os.path.join(
-            self.opt['path']['checkpoint'], 'I{}_E{}_gen.pth'.format(iter_step, epoch))
-        opt_path = os.path.join(
-            self.opt['path']['checkpoint'], 'I{}_E{}_opt.pth'.format(iter_step, epoch))
+        gen_path = os.path.join(self.opt['path']['checkpoint'], f'I{iter_step}_E{epoch}_gen.pth')
+        opt_path = os.path.join(self.opt['path']['checkpoint'], 'I{iter_step}_E{epoch}_opt.pth')
         # gen
         network = self.netG
         if isinstance(self.netG, nn.DataParallel):

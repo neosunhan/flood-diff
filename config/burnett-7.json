@@ -92,6 +92,10 @@
             "ema_decay": 0.9999
         }
     },
+    "test": {
+        "save_results": false,
+        "threshold": 5
+    },
     "wandb": {
         "project": "no_project"
     }

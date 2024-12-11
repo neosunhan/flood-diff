@@ -71,6 +71,7 @@
         "diffusion": {
             "image_size": 512,
             "channels": 1,
+            "loss_type": "l1",
             "conditional": true 
         }
     },

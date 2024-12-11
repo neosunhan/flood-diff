@@ -5,7 +5,7 @@
     "path": {
         "log": "logs",
         "tb_logger": "tb_logger",
-        "results": "results/400k",
+        "results": "results/burnett_400k",
         "checkpoint": "checkpoint",
         "resume_state": "prelim_small/checkpoint/I400000_E92"
     },
@@ -26,8 +26,8 @@
             "data_len": -1
         },
         "test": {
-            "catchment": "Wollombi 1k",
-            "dataroot": "../data/wollombi_1k",
+            "catchment": "Burnett 1k",
+            "dataroot": "../data/burnett_1k",
             "batch_size": 8,
             "use_shuffle": true,
             "data_len": 16
@@ -71,6 +71,7 @@
         "diffusion": {
             "image_size": 512,
             "channels": 1,
+            "loss_type": "l1",
             "conditional": true 
         }
     },
