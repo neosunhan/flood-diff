@@ -1,11 +1,10 @@
 import logging
 from collections import OrderedDict
-
 import torch
 import torch.nn as nn
 import os
 import model.networks as networks
-from .base_model import BaseModel
+from model.base_model import BaseModel
 logger = logging.getLogger('base')
 
 
@@ -13,7 +12,7 @@ class DDPM(BaseModel):
     def __init__(self, opt):
         super(DDPM, self).__init__(opt)
         # define network and load pretrained models
-        self.netG = self.set_device(networks.define_G(opt))
+        self.netG = self.set_device(networks.define_generator(opt))
         self.schedule_phase = None
         self.saved_checkpoints = []
 
@@ -31,7 +30,7 @@ class DDPM(BaseModel):
                         v.requires_grad = True
                         v.data.zero_()
                         optim_params.append(v)
-                        logger.info('Params [{:s}] initialized to 0 and will optimize.'.format(k))
+                        logger.info(f'Params [{k}] initialized to 0 and will optimize.')
             else:
                 optim_params = list(self.netG.parameters())
 
@@ -55,24 +54,13 @@ class DDPM(BaseModel):
         # set log
         self.log_dict['l_pix'] = l_pix.item()
 
-    def test(self, continous=False):
+    def test(self):
         self.netG.eval()
         with torch.no_grad():
             if isinstance(self.netG, nn.DataParallel):
-                self.SR = self.netG.module.super_resolution(
-                    self.data['SR'], self.data['DEM'], continous)
+                self.SR = self.netG.module.super_resolution(self.data['SR'], self.data['DEM'])
             else:
-                self.SR = self.netG.super_resolution(
-                    self.data['SR'], self.data['DEM'], continous)
-        self.netG.train()
-
-    def sample(self, batch_size=1, continous=False):
-        self.netG.eval()
-        with torch.no_grad():
-            if isinstance(self.netG, nn.DataParallel):
-                self.SR = self.netG.module.sample(batch_size, continous)
-            else:
-                self.SR = self.netG.sample(batch_size, continous)
+                self.SR = self.netG.super_resolution(self.data['SR'], self.data['DEM'])
         self.netG.train()
 
     def set_loss(self):
@@ -147,12 +135,12 @@ class DDPM(BaseModel):
     def load_network(self):
         load_path = self.opt['path']['resume_state']
         if load_path is not None:
-            logger.info('Loading pretrained model for G [{:s}] ...'.format(load_path))
+            logger.info(f'Loading pretrained model for G [{load_path}] ...')
             gen_path = f'{load_path}_gen.pth'
             opt_path = f'{load_path}_opt.pth'
             # gen
             network = self.netG
-            if isinstance(self.netG, nn.DataParallel):
+            if isinstance(network, nn.DataParallel):
                 network = network.module
             network.load_state_dict(torch.load(gen_path, weights_only=True), strict=(not self.opt['model']['finetune_norm']))
             # network.load_state_dict(torch.load(gen_path), strict=False)

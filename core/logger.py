@@ -1,27 +1,13 @@
 import os
-import os.path as osp
 import logging
 from collections import OrderedDict
 import json
-from datetime import datetime
-
-
-def mkdirs(paths):
-    if isinstance(paths, str):
-        os.makedirs(paths, exist_ok=True)
-    else:
-        for path in paths:
-            os.makedirs(path, exist_ok=True)
-
-
-def get_timestamp():
-    return datetime.now().strftime('%y%m%d_%H%M%S')
 
 
 def parse(args):
     phase = args.phase
     opt_path = args.config
-    enable_wandb = args.enable_wandb
+
     # remove comments starting with '//'
     json_str = ''
     with open(opt_path, 'r') as f:
@@ -30,20 +16,19 @@ def parse(args):
             json_str += line
     opt = json.loads(json_str, object_pairs_hook=OrderedDict)
 
-    # set log directory
-    if args.debug:
-        opt['name'] = 'debug_{}'.format(opt['name'])
+    # set log directory       
     experiments_root = args.output_dir
     opt['path']['experiments_root'] = experiments_root
     for key, path in opt['path'].items():
-        if 'resume' not in key and 'experiments' not in key:
+        if key not in ('resume_state', 'experiments_root'):
             opt['path'][key] = os.path.join(experiments_root, path)
-            mkdirs(opt['path'][key])
+            os.makedirs(opt['path'][key], exist_ok=True)
 
     opt['phase'] = phase
 
     # debug
-    if 'debug' in opt['name']:
+    if args.debug:
+        opt['name'] = f'debug_{opt['name']}'
         opt['train']['val_freq'] = 2
         opt['train']['print_freq'] = 2
         opt['train']['save_checkpoint_freq'] = 3
@@ -58,24 +43,6 @@ def parse(args):
         opt['datasets']['test']['data_len'] = 3
         opt['datasets']['test']['batch_size'] = 1
         opt['datasets']['test']['use_shuffle'] = False
-
-    # W&B Logging
-    try:
-        log_wandb_ckpt = args.log_wandb_ckpt
-        opt['log_wandb_ckpt'] = log_wandb_ckpt
-    except:
-        pass
-    try:
-        log_eval = args.log_eval
-        opt['log_eval'] = log_eval
-    except:
-        pass
-    try:
-        log_infer = args.log_infer
-        opt['log_infer'] = log_infer
-    except:
-        pass
-    opt['enable_wandb'] = enable_wandb
     
     return opt
 
@@ -113,15 +80,17 @@ def dict2str(opt, indent_l=1):
 
 def setup_logger(logger_name, root, phase, level=logging.INFO, screen=False):
     '''set up logger'''
-    l = logging.getLogger(logger_name)
-    formatter = logging.Formatter(
-        '%(asctime)s.%(msecs)03d - %(levelname)s: %(message)s', datefmt='%y-%m-%d %H:%M:%S')
-    log_file = os.path.join(root, '{}.log'.format(phase))
-    fh = logging.FileHandler(log_file, mode='w')
-    fh.setFormatter(formatter)
-    l.setLevel(level)
-    l.addHandler(fh)
+    logger = logging.getLogger(logger_name)
+    formatter = logging.Formatter('%(asctime)s.%(msecs)03d - %(levelname)s: %(message)s', datefmt='%y-%m-%d %H:%M:%S')
+    log_file = os.path.join(root, f'{phase}.log')
+    file_handler = logging.FileHandler(log_file, mode='w')
+    file_handler.setFormatter(formatter)
+    logger.setLevel(level)
+    logger.addHandler(file_handler)
+
     if screen:
-        sh = logging.StreamHandler()
-        sh.setFormatter(formatter)
-        l.addHandler(sh)
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(formatter)
+        logger.addHandler(stream_handler)
+
+    return logger

@@ -1,18 +1,7 @@
 import math
 import torch
 from torch import nn
-import torch.nn.functional as F
-from inspect import isfunction
 
-
-def exists(x):
-    return x is not None
-
-
-def default(val, d):
-    if exists(val):
-        return val
-    return d() if isfunction(d) else d
 
 # PositionalEncoding Source： https://github.com/lmnt-com/wavegrad/blob/master/src/wavegrad/model.py
 class PositionalEncoding(nn.Module):
@@ -22,12 +11,9 @@ class PositionalEncoding(nn.Module):
 
     def forward(self, noise_level):
         count = self.dim // 2
-        step = torch.arange(count, dtype=noise_level.dtype,
-                            device=noise_level.device) / count
-        encoding = noise_level.unsqueeze(
-            1) * torch.exp(-math.log(1e4) * step.unsqueeze(0))
-        encoding = torch.cat(
-            [torch.sin(encoding), torch.cos(encoding)], dim=-1)
+        step = torch.arange(count, dtype=noise_level.dtype, device=noise_level.device) / count
+        encoding = noise_level.unsqueeze(1) * torch.exp(-math.log(1e4) * step.unsqueeze(0))
+        encoding = torch.cat([torch.sin(encoding), torch.cos(encoding)], dim=-1)
         return encoding
 
 
@@ -36,14 +22,13 @@ class FeatureWiseAffine(nn.Module):
         super(FeatureWiseAffine, self).__init__()
         self.use_affine_level = use_affine_level
         self.noise_func = nn.Sequential(
-            nn.Linear(in_channels, out_channels*(1+self.use_affine_level))
+            nn.Linear(in_channels, out_channels*(1 + self.use_affine_level))
         )
 
     def forward(self, x, noise_embed):
         batch = x.shape[0]
         if self.use_affine_level:
-            gamma, beta = self.noise_func(noise_embed).view(
-                batch, -1, 1, 1).chunk(2, dim=1)
+            gamma, beta = self.noise_func(noise_embed).view(batch, -1, 1, 1).chunk(2, dim=1)
             x = (1 + gamma) * x + beta
         else:
             x = x + self.noise_func(noise_embed).view(batch, -1, 1, 1)
@@ -75,8 +60,6 @@ class Downsample(nn.Module):
 
 
 # building block modules
-
-
 class Block(nn.Module):
     def __init__(self, dim, dim_out, groups=32, dropout=0):
         super().__init__()
@@ -98,8 +81,7 @@ class ResnetBlock(nn.Module):
 
         self.block1 = Block(dim, dim_out, groups=norm_groups)
         self.block2 = Block(dim_out, dim_out, groups=norm_groups, dropout=dropout)
-        self.res_conv = nn.Conv2d(
-            dim, dim_out, 1) if dim != dim_out else nn.Identity()
+        self.res_conv = nn.Conv2d(dim, dim_out, 1) if dim != dim_out else nn.Identity()
 
     def forward(self, x, time_emb):
         b, c, h, w = x.shape
@@ -128,9 +110,7 @@ class SelfAttention(nn.Module):
         qkv = self.qkv(norm).view(batch, n_head, head_dim * 3, height, width)
         query, key, value = qkv.chunk(3, dim=2)  # bhdyx
 
-        attn = torch.einsum(
-            "bnchw, bncyx -> bnhwyx", query, key
-        ).contiguous() / math.sqrt(channel)
+        attn = torch.einsum("bnchw, bncyx -> bnhwyx", query, key).contiguous() / math.sqrt(channel)
         attn = attn.view(batch, n_head, height, width, -1)
         attn = torch.softmax(attn, -1)
         attn = attn.view(batch, n_head, height, width, height, width)
@@ -145,8 +125,7 @@ class ResnetBlocWithAttn(nn.Module):
     def __init__(self, dim, dim_out, *, noise_level_emb_dim=None, norm_groups=32, dropout=0, with_attn=False):
         super().__init__()
         self.with_attn = with_attn
-        self.res_block = ResnetBlock(
-            dim, dim_out, noise_level_emb_dim, norm_groups=norm_groups, dropout=dropout)
+        self.res_block = ResnetBlock(dim, dim_out, noise_level_emb_dim, norm_groups=norm_groups, dropout=dropout)
         if with_attn:
             self.attn = SelfAttention(dim_out, norm_groups=norm_groups)
 
@@ -172,6 +151,8 @@ class UNet(nn.Module):
         image_size=128
     ):
         super().__init__()
+        if out_channel is None:
+            out_channel = in_channel
 
         if with_noise_level_emb:
             noise_level_channel = inner_channel
@@ -228,10 +209,10 @@ class UNet(nn.Module):
 
         self.ups = nn.ModuleList(ups)
 
-        self.final_conv = Block(pre_channel, default(out_channel, in_channel), groups=norm_groups)
+        self.final_conv = Block(pre_channel, out_channel, groups=norm_groups)
 
     def forward(self, x, time):
-        t = self.noise_level_mlp(time) if exists(self.noise_level_mlp) else None
+        t = self.noise_level_mlp(time) if self.noise_level_mlp is not None else None
 
         feats = []
         for layer in self.downs:

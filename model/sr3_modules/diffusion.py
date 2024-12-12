@@ -1,18 +1,9 @@
 import math
 import torch
-from torch import device, nn, einsum
-import torch.nn.functional as F
-from inspect import isfunction
+from torch import nn
 from functools import partial
 import numpy as np
 from tqdm import tqdm
-
-
-def _warmup_beta(linear_start, linear_end, n_timestep, warmup_frac):
-    betas = linear_end * np.ones(n_timestep, dtype=np.float64)
-    warmup_time = int(n_timestep * warmup_frac)
-    betas[:warmup_time] = np.linspace(linear_start, linear_end, warmup_time, dtype=np.float64)
-    return betas
 
 
 def make_beta_schedule(schedule, n_timestep, linear_start=1e-4, linear_end=2e-2, cosine_s=8e-3):
@@ -20,41 +11,24 @@ def make_beta_schedule(schedule, n_timestep, linear_start=1e-4, linear_end=2e-2,
         betas = np.linspace(linear_start ** 0.5, linear_end ** 0.5, n_timestep, dtype=np.float64) ** 2
     elif schedule == 'linear':
         betas = np.linspace(linear_start, linear_end, n_timestep, dtype=np.float64)
-    elif schedule == 'warmup10':
-        betas = _warmup_beta(linear_start, linear_end, n_timestep, 0.1)
-    elif schedule == 'warmup50':
-        betas = _warmup_beta(linear_start, linear_end, n_timestep, 0.5)
     elif schedule == 'const':
         betas = linear_end * np.ones(n_timestep, dtype=np.float64)
     elif schedule == 'jsd':  # 1/T, 1/(T-1), 1/(T-2), ..., 1
         betas = 1. / np.linspace(n_timestep, 1, n_timestep, dtype=np.float64)
     elif schedule == "cosine":
-        timesteps = (
-            torch.arange(n_timestep + 1, dtype=torch.float64) /
-            n_timestep + cosine_s
-        )
+        timesteps = torch.arange(n_timestep + 1, dtype=torch.float64) / n_timestep + cosine_s
         alphas = timesteps / (1 + cosine_s) * math.pi / 2
         alphas = torch.cos(alphas).pow(2)
         alphas = alphas / alphas[0]
         betas = 1 - alphas[1:] / alphas[:-1]
         betas = betas.clamp(max=0.999)
     else:
-        raise NotImplementedError(schedule)
+        raise NotImplementedError(f"{schedule} noise schedule not implemented")
     return betas
 
 
+
 # gaussian diffusion trainer class
-
-def exists(x):
-    return x is not None
-
-
-def default(val, d):
-    if exists(val):
-        return val
-    return d() if isfunction(d) else d
-
-
 class GaussianDiffusion(nn.Module):
     def __init__(
         self,
@@ -71,9 +45,6 @@ class GaussianDiffusion(nn.Module):
         self.channels = channels
         self.loss_type = loss_type
         self.conditional = conditional
-        if schedule_opt is not None:
-            pass
-            # self.set_new_noise_schedule(schedule_opt)
 
     def set_loss(self, device):
         if self.loss_type == 'l1':
@@ -81,7 +52,7 @@ class GaussianDiffusion(nn.Module):
         elif self.loss_type == 'l2':
             self.loss_func = nn.MSELoss(reduction='sum').to(device)
         else:
-            raise NotImplementedError()
+            raise NotImplementedError(f"{self.loss_type} loss not implemented")
 
     def set_new_noise_schedule(self, schedule_opt, device):
         to_torch = partial(torch.tensor, dtype=torch.float32, device=device)
@@ -127,17 +98,14 @@ class GaussianDiffusion(nn.Module):
         posterior_log_variance_clipped = self.posterior_log_variance_clipped[t]
         return posterior_mean, posterior_log_variance_clipped
 
-    def p_mean_variance(self, x, t, clip_denoised: bool, condition_x=None, dem=None):
+    def p_mean_variance(self, x, t, clip_denoised, condition_x, dem):
         batch_size = x.shape[0]
         noise_level = torch.FloatTensor([self.sqrt_alphas_cumprod_prev[t+1]]).repeat(batch_size, 1).to(x.device)
-        if condition_x is not None and dem is not None:
-            x_recon = self.predict_start_from_noise(
-                x, 
-                t=t, 
-                noise=self.denoise_fn(torch.cat([condition_x, x, dem], dim=1), noise_level)
-            )
-        else:
-            x_recon = self.predict_start_from_noise(x, t=t, noise=self.denoise_fn(x, noise_level))
+        x_recon = self.predict_start_from_noise(
+            x, 
+            t=t, 
+            noise=self.denoise_fn(torch.cat([condition_x, x, dem], dim=1), noise_level)
+        )
 
         if clip_denoised:
             x_recon.clamp_(-1., 1.)
@@ -146,54 +114,32 @@ class GaussianDiffusion(nn.Module):
         return model_mean, posterior_log_variance
 
     @torch.no_grad()
-    def p_sample(self, x, t, clip_denoised=True, condition_x=None, dem=None):
+    def p_sample(self, x, t, condition_x, dem, clip_denoised=True):
         model_mean, model_log_variance = self.p_mean_variance(
             x=x, t=t, clip_denoised=clip_denoised, condition_x=condition_x, dem=dem)
         noise = torch.randn_like(x) if t > 0 else torch.zeros_like(x)
         return model_mean + noise * (0.5 * model_log_variance).exp()
 
     @torch.no_grad()
-    def p_sample_loop(self, x_in, dem, continous=False):
-        if continous:
-            raise NotImplementedError("continous")
+    def p_sample_loop(self, x_in, dem):
         device = self.betas.device
-        sample_inter = (1 | (self.num_timesteps // 10))
-        if not self.conditional:
-            shape = x_in
-            img = torch.randn(shape, device=device)
-            ret_img = img
-            for i in tqdm(reversed(range(self.num_timesteps)), desc='sampling loop time step', total=self.num_timesteps):
-                img = self.p_sample(img, i)
-                if i % sample_inter == 0:
-                    ret_img = torch.cat([ret_img, img], dim=0)
-            return ret_img[-1]
-        else:
-            x = x_in
-            shape = x.shape
-            img = torch.randn(shape, device=device)
-            for i in reversed(range(self.num_timesteps)):
-                img = self.p_sample(img, i, condition_x=x, dem=dem)
-            return img
-        
+        x = x_in
+        shape = x.shape
+        img = torch.randn(shape, device=device)
+        for i in reversed(range(self.num_timesteps)):
+            img = self.p_sample(img, i, condition_x=x, dem=dem)
+        return img
 
     @torch.no_grad()
-    def sample(self, batch_size=1, continous=False):
-        image_size = self.image_size
-        channels = self.channels
-        return self.p_sample_loop((batch_size, channels, image_size, image_size), continous)
-
-    @torch.no_grad()
-    def super_resolution(self, x_in, dem, continous=False):
-        return self.p_sample_loop(x_in, dem, continous)
+    def super_resolution(self, x_in, dem):
+        return self.p_sample_loop(x_in, dem)
 
     def q_sample(self, x_start, continuous_sqrt_alpha_cumprod, noise=None):
-        noise = default(noise, lambda: torch.randn_like(x_start))
+        if noise is None:
+            noise = torch.randn_like(x_start)
 
         # random gama
-        return (
-            continuous_sqrt_alpha_cumprod * x_start +
-            (1 - continuous_sqrt_alpha_cumprod ** 2).sqrt() * noise
-        )
+        return continuous_sqrt_alpha_cumprod * x_start + (1 - continuous_sqrt_alpha_cumprod ** 2).sqrt() * noise
 
     def p_losses(self, x_in, noise=None):
         x_start = x_in['HR']
@@ -208,7 +154,8 @@ class GaussianDiffusion(nn.Module):
         ).to(x_start.device)
         continuous_sqrt_alpha_cumprod = continuous_sqrt_alpha_cumprod.view(b, -1)
 
-        noise = default(noise, lambda: torch.randn_like(x_start))
+        if noise is None:
+            noise = torch.randn_like(x_start)
         x_noisy = self.q_sample(
             x_start=x_start, continuous_sqrt_alpha_cumprod=continuous_sqrt_alpha_cumprod.view(-1, 1, 1, 1), noise=noise)
 

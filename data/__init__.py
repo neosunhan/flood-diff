@@ -1,4 +1,3 @@
-'''create dataset and dataloader'''
 import logging
 import torch.utils.data
 import os
@@ -23,8 +22,7 @@ def create_dataloader(dataset, dataset_opt, phase):
             pin_memory=True
         )
     else:
-        raise NotImplementedError(
-            'Dataloader [{:s}] is not found.'.format(phase))
+        raise NotImplementedError(f'Dataloader [{phase}] is not found.')
 
 
 def create_dataset(dataset_opt, phase, meta):

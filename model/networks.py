@@ -78,14 +78,13 @@ def init_weights(net, init_type='kaiming', scale=1, std=0.02):
 
 
 # Generator
-def define_G(opt):
+def define_generator(opt):
     model_opt = opt['model']
     if model_opt['which_model_G'] == 'ddpm':
-        from .ddpm_modules import diffusion, unet
+        from model.ddpm_modules import diffusion, unet
     elif model_opt['which_model_G'] == 'sr3':
-        from .sr3_modules import diffusion, unet
-    if ('norm_groups' not in model_opt['unet']) or model_opt['unet']['norm_groups'] is None:
-        model_opt['unet']['norm_groups'] = 32
+        from model.sr3_modules import diffusion, unet
+
     model = unet.UNet(
         in_channel=model_opt['unet']['in_channel'],
         out_channel=model_opt['unet']['out_channel'],
@@ -97,7 +96,7 @@ def define_G(opt):
         dropout=model_opt['unet']['dropout'],
         image_size=model_opt['diffusion']['image_size']
     )
-    netG = diffusion.GaussianDiffusion(
+    net_generator = diffusion.GaussianDiffusion(
         model,
         image_size=model_opt['diffusion']['image_size'],
         channels=model_opt['diffusion']['channels'],
@@ -105,10 +104,13 @@ def define_G(opt):
         conditional=model_opt['diffusion']['conditional'],
         schedule_opt=model_opt['beta_schedule']['train']
     )
+
     if opt['phase'] == 'train':
-        # init_weights(netG, init_type='kaiming', scale=0.1)
-        init_weights(netG, init_type='orthogonal')
+        # init_weights(net_generator, init_type='kaiming', scale=0.1)
+        init_weights(net_generator, init_type='orthogonal')
+
     if opt['distributed']:
         assert torch.cuda.is_available()
-        netG = nn.DataParallel(netG)
-    return netG
+        net_generator = nn.DataParallel(net_generator)
+
+    return net_generator
