@@ -3,8 +3,8 @@ import logging
 import torch
 import torch.nn as nn
 from torch.nn import init
-from torch.nn import modules
 logger = logging.getLogger('base')
+
 ####################
 # initialize
 ####################
@@ -64,14 +64,12 @@ def init_weights(net, init_type='kaiming', scale=1, std=0.02):
         weights_init_normal_ = functools.partial(weights_init_normal, std=std)
         net.apply(weights_init_normal_)
     elif init_type == 'kaiming':
-        weights_init_kaiming_ = functools.partial(
-            weights_init_kaiming, scale=scale)
+        weights_init_kaiming_ = functools.partial(weights_init_kaiming, scale=scale)
         net.apply(weights_init_kaiming_)
     elif init_type == 'orthogonal':
         net.apply(weights_init_orthogonal)
     else:
-        raise NotImplementedError(
-            'initialization method [{:s}] not implemented'.format(init_type))
+        raise NotImplementedError(f'initialization method [{init_type}] not implemented')
 
 
 ####################

@@ -11,8 +11,7 @@ from tqdm import tqdm
 def _warmup_beta(linear_start, linear_end, n_timestep, warmup_frac):
     betas = linear_end * np.ones(n_timestep, dtype=np.float64)
     warmup_time = int(n_timestep * warmup_frac)
-    betas[:warmup_time] = np.linspace(
-        linear_start, linear_end, warmup_time, dtype=np.float64)
+    betas[:warmup_time] = np.linspace(linear_start, linear_end, warmup_time, dtype=np.float64)
     return betas
 
 
@@ -102,55 +101,43 @@ class GaussianDiffusion(nn.Module):
         self.num_timesteps = int(timesteps)
         self.register_buffer('betas', to_torch(betas))
         self.register_buffer('alphas_cumprod', to_torch(alphas_cumprod))
-        self.register_buffer('alphas_cumprod_prev',
-                             to_torch(alphas_cumprod_prev))
+        self.register_buffer('alphas_cumprod_prev', to_torch(alphas_cumprod_prev))
 
         # calculations for diffusion q(x_t | x_{t-1}) and others
-        self.register_buffer('sqrt_alphas_cumprod',
-                             to_torch(np.sqrt(alphas_cumprod)))
-        self.register_buffer('sqrt_one_minus_alphas_cumprod',
-                             to_torch(np.sqrt(1. - alphas_cumprod)))
-        self.register_buffer('log_one_minus_alphas_cumprod',
-                             to_torch(np.log(1. - alphas_cumprod)))
-        self.register_buffer('sqrt_recip_alphas_cumprod',
-                             to_torch(np.sqrt(1. / alphas_cumprod)))
-        self.register_buffer('sqrt_recipm1_alphas_cumprod',
-                             to_torch(np.sqrt(1. / alphas_cumprod - 1)))
+        self.register_buffer('sqrt_alphas_cumprod', to_torch(np.sqrt(alphas_cumprod)))
+        self.register_buffer('sqrt_one_minus_alphas_cumprod', to_torch(np.sqrt(1. - alphas_cumprod)))
+        self.register_buffer('log_one_minus_alphas_cumprod', to_torch(np.log(1. - alphas_cumprod)))
+        self.register_buffer('sqrt_recip_alphas_cumprod', to_torch(np.sqrt(1. / alphas_cumprod)))
+        self.register_buffer('sqrt_recipm1_alphas_cumprod', to_torch(np.sqrt(1. / alphas_cumprod - 1)))
 
-        # calculations for posterior q(x_{t-1} | x_t, x_0)
-        posterior_variance = betas * \
-            (1. - alphas_cumprod_prev) / (1. - alphas_cumprod)
+        # calculations for posterior p(x_{t-1} | x_t, x_0)
+        posterior_variance = betas * (1. - alphas_cumprod_prev) / (1. - alphas_cumprod)
         # above: equal to 1. / (1. / (1. - alpha_cumprod_tm1) + alpha_t / beta_t)
-        self.register_buffer('posterior_variance',
-                             to_torch(posterior_variance))
+        self.register_buffer('posterior_variance', to_torch(posterior_variance))
         # below: log calculation clipped because the posterior variance is 0 at the beginning of the diffusion chain
-        self.register_buffer('posterior_log_variance_clipped', to_torch(
-            np.log(np.maximum(posterior_variance, 1e-20))))
-        self.register_buffer('posterior_mean_coef1', to_torch(
-            betas * np.sqrt(alphas_cumprod_prev) / (1. - alphas_cumprod)))
-        self.register_buffer('posterior_mean_coef2', to_torch(
-            (1. - alphas_cumprod_prev) * np.sqrt(alphas) / (1. - alphas_cumprod)))
+        self.register_buffer('posterior_log_variance_clipped', to_torch(np.log(np.maximum(posterior_variance, 1e-20))))
+        self.register_buffer('posterior_mean_coef1', to_torch(betas * np.sqrt(alphas_cumprod_prev) / (1. - alphas_cumprod)))
+        self.register_buffer('posterior_mean_coef2', to_torch((1. - alphas_cumprod_prev) * np.sqrt(alphas) / (1. - alphas_cumprod)))
 
     def predict_start_from_noise(self, x_t, t, noise):
-        return self.sqrt_recip_alphas_cumprod[t] * x_t - \
-            self.sqrt_recipm1_alphas_cumprod[t] * noise
+        return self.sqrt_recip_alphas_cumprod[t] * x_t - self.sqrt_recipm1_alphas_cumprod[t] * noise
 
     def q_posterior(self, x_start, x_t, t):
-        posterior_mean = self.posterior_mean_coef1[t] * \
-            x_start + self.posterior_mean_coef2[t] * x_t
+        posterior_mean = self.posterior_mean_coef1[t] * x_start + self.posterior_mean_coef2[t] * x_t
         posterior_log_variance_clipped = self.posterior_log_variance_clipped[t]
         return posterior_mean, posterior_log_variance_clipped
 
     def p_mean_variance(self, x, t, clip_denoised: bool, condition_x=None, dem=None):
         batch_size = x.shape[0]
-        noise_level = torch.FloatTensor(
-            [self.sqrt_alphas_cumprod_prev[t+1]]).repeat(batch_size, 1).to(x.device)
+        noise_level = torch.FloatTensor([self.sqrt_alphas_cumprod_prev[t+1]]).repeat(batch_size, 1).to(x.device)
         if condition_x is not None and dem is not None:
             x_recon = self.predict_start_from_noise(
-                x, t=t, noise=self.denoise_fn(torch.cat([condition_x, x, dem], dim=1), noise_level))
+                x, 
+                t=t, 
+                noise=self.denoise_fn(torch.cat([condition_x, x, dem], dim=1), noise_level)
+            )
         else:
-            x_recon = self.predict_start_from_noise(
-                x, t=t, noise=self.denoise_fn(x, noise_level))
+            x_recon = self.predict_start_from_noise(x, t=t, noise=self.denoise_fn(x, noise_level))
 
         if clip_denoised:
             x_recon.clamp_(-1., 1.)

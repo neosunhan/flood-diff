@@ -2,10 +2,10 @@
 import logging
 import torch.utils.data
 import os
+from data.flood_depth_dataset import FloodDepthDatasetWithDEM
 
 
 def create_dataloader(dataset, dataset_opt, phase):
-    '''create dataloader '''
     if phase == 'train':
         return torch.utils.data.DataLoader(
             dataset,
@@ -28,18 +28,7 @@ def create_dataloader(dataset, dataset_opt, phase):
 
 
 def create_dataset(dataset_opt, phase, meta):
-    '''create dataset'''
-    # from data.LRHR_dataset import LRHRDataset as D
-    from data.flood_depth_dataset import FloodDepthDatasetWithDEM as D
-    # dataset = D(dataroot=dataset_opt['dataroot'],
-    #             datatype=dataset_opt['datatype'],
-    #             l_resolution=dataset_opt['l_resolution'],
-    #             r_resolution=dataset_opt['r_resolution'],
-    #             split=phase,
-    #             data_len=dataset_opt['data_len'],
-    #             need_LR=(dataset_opt['mode'] == 'LRHR')
-    #             )
-    dataset = D(
+    dataset = FloodDepthDatasetWithDEM(
         low_res_folder=os.path.join(dataset_opt["dataroot"], f"{phase}_lr"),
         high_res_folder=os.path.join(dataset_opt["dataroot"], f"{phase}_hr"),
         dem_folder=os.path.join(dataset_opt["dataroot"], "cropped_dems"),

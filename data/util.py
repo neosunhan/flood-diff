@@ -55,10 +55,9 @@ def transform2numpy(img):
 
 def transform2tensor(img, min_max=(0, 1)):
     # HWC to CHW
-    img = torch.from_numpy(np.ascontiguousarray(
-        np.transpose(img, (2, 0, 1)))).float()
+    img = torch.from_numpy(np.ascontiguousarray(np.transpose(img, (2, 0, 1)))).float()
     # to range min_max
-    img = img*(min_max[1] - min_max[0]) + min_max[0]
+    img = img * (min_max[1] - min_max[0]) + min_max[0]
     return img
 
 
