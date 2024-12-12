@@ -28,7 +28,7 @@ def parse(args):
 
     # debug
     if args.debug:
-        opt['name'] = f'debug_{opt['name']}'
+        opt['name'] = f"debug_{opt['name']}"
         opt['train']['val_freq'] = 2
         opt['train']['print_freq'] = 2
         opt['train']['save_checkpoint_freq'] = 3

@@ -7,7 +7,7 @@
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": "chowilla-5/checkpoint/I200000_E10"
+        "resume_state": "chowilla-5/checkpoint/I400000_E20"
     },
     "datasets": {
         "meta": {
@@ -76,7 +76,7 @@
         }
     },
     "train": {
-        "n_iter": 400000,
+        "n_iter": 600000,
         "val_freq": 5e4,
         "save_checkpoint_freq": 1e5,
         "print_freq": 1000,

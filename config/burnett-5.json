@@ -26,7 +26,7 @@
             "data_len": -1
         },
         "test": {
-            "catchment": "Burnett 1k",
+            "catchment": "Wollombi 1k",
             "dataroot": "../data/burnett_1k",
             "batch_size": 8,
             "use_shuffle": true,
@@ -76,13 +76,13 @@
         }
     },
     "train": {
-        "n_iter": 950000,
+        "n_iter": 1200000,
         "val_freq": 5e4,
         "save_checkpoint_freq": 5e4,
         "print_freq": 1000,
         "optimizer": {
             "type": "adam",
-            "lr": 3e-7
+            "lr": 1e-6
         },
         "ema_scheduler": {
             "step_start_ema": 5000,
