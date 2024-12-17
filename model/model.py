@@ -110,7 +110,7 @@ class DDPM(BaseModel):
         if (iter_step, epoch) in self.saved_checkpoints:
             return
         gen_path = os.path.join(self.opt['path']['checkpoint'], f'I{iter_step}_E{epoch}_gen.pth')
-        opt_path = os.path.join(self.opt['path']['checkpoint'], 'I{iter_step}_E{epoch}_opt.pth')
+        opt_path = os.path.join(self.opt['path']['checkpoint'], f'I{iter_step}_E{epoch}_opt.pth')
         # gen
         network = self.netG
         if isinstance(self.netG, nn.DataParallel):
