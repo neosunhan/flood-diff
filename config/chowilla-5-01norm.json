@@ -1,5 +1,5 @@
 {
-    "name": "wollombi-5-01norm",
+    "name": "chowilla-5-01norm",
     "phase": "train",
     "distributed": false,
     "path": {
@@ -7,7 +7,7 @@
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": "wollombi-5-01norm/checkpoint/I400000_E92"
+        "resume_state": "chowilla-5-01norm/checkpoint/I200000_E10"
     },
     "datasets": {
         "meta": {
@@ -18,8 +18,8 @@
             "norm_max": 1
         },
         "train": {
-            "catchment": "Wollombi",
-            "dataroot": "../data/wollombi",
+            "catchment": "Chowilla",
+            "dataroot": "../data/chowilla",
             "batch_size": 8,
             "num_workers": 1,
             "use_shuffle": true,
@@ -78,11 +78,11 @@
     "train": {
         "n_iter": 400000,
         "val_freq": 5e4,
-        "save_checkpoint_freq": 1e5,
+        "save_checkpoint_freq": 5e4,
         "print_freq": 1000,
         "optimizer": {
             "type": "adam",
-            "lr": 1e-5
+            "lr": 1e-6
         },
         "ema_scheduler": {
             "step_start_ema": 5000,

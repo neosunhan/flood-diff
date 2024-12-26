@@ -101,7 +101,7 @@ class DDPM(BaseModel):
         if isinstance(self.netG, nn.DataParallel):
             net_struc_str = f'{self.netG.__class__.__name__} - {self.netG.module.__class__.__name__}'
         else:
-            net_struc_str = '{self.netG.__class__.__name__}'
+            net_struc_str = f'{self.netG.__class__.__name__}'
 
         logger.info(f'Network G structure: {net_struc_str}, with parameters: {n:,d}')
         logger.info(s)
