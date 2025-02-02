@@ -18,11 +18,11 @@ def parse(args):
 
     # set log directory       
     experiments_root = args.output_dir
-    opt['path']['experiments_root'] = experiments_root
     for key, path in opt['path'].items():
-        if key not in ('resume_state', 'experiments_root'):
+        if "state" not in key:
             opt['path'][key] = os.path.join(experiments_root, path)
             os.makedirs(opt['path'][key], exist_ok=True)
+    opt['path']['experiments_root'] = experiments_root
 
     opt['phase'] = phase
 

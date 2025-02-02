@@ -1,13 +1,17 @@
 {
-    "name": "chowilla-5-01norm",
+    "name": "wollombi-latent",
     "phase": "train",
     "distributed": false,
+    "amp": false,
+    "latent": true,
     "path": {
         "log": "logs",
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": "chowilla-5-01norm/checkpoint/I400000_E20"
+        "resume_state": "wollombi-latent/checkpoint/I200000_E46",
+        "vae_state": "../autoencoder/wollombi_alt/checkpoint/model_and_optimizer_epoch_25.pth",
+        "vae_dem_state": "../autoencoder/all_dem/checkpoint/model_and_optimizer_epoch_2400.pth"
     },
     "datasets": {
         "meta": {
@@ -15,11 +19,13 @@
             "dem_max_value": 440,
             "dem_min_value": -20,
             "norm_min": 0,
-            "norm_max": 1
+            "norm_max": 1,
+            "channels": 1,
+            "image_size": 512
         },
         "train": {
-            "catchment": "Chowilla",
-            "dataroot": "../data/chowilla",
+            "catchment": "Wollombi",
+            "dataroot": "../data/wollombi",
             "batch_size": 8,
             "num_workers": 1,
             "use_shuffle": true,
@@ -37,21 +43,21 @@
         "which_model_G": "sr3",
         "finetune_norm": false,
         "unet": {
-            "in_channel": 3,
-            "out_channel": 1,
-            "inner_channel": 64,
+            "in_channel": 12,
+            "out_channel": 4,
+            "inner_channel": 128,
             "norm_groups": 16,
             "channel_multiplier": [
                 1,
                 2,
-                4,
+                2,
+                4
+            ],
+            "attn_res": [
                 8,
                 16
             ],
-            "attn_res": [
-                32
-            ],
-            "res_blocks": 3,
+            "res_blocks": 2,
             "dropout": 0
         },
         "beta_schedule": {
@@ -64,13 +70,13 @@
             "test": {
                 "schedule": "linear",
                 "n_timestep": 1000,
+                "backward_start": 100,
                 "linear_start": 1e-6,
                 "linear_end": 1e-2
             }
         },
         "diffusion": {
-            "image_size": 512,
-            "channels": 1,
+            "image_size": 64,
             "loss_type": "l1",
             "conditional": true 
         }
@@ -82,7 +88,7 @@
         "print_freq": 1000,
         "optimizer": {
             "type": "adam",
-            "lr": 1e-6
+            "lr": 1e-7
         },
         "ema_scheduler": {
             "step_start_ema": 5000,

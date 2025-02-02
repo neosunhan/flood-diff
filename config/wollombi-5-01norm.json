@@ -2,12 +2,13 @@
     "name": "wollombi-5-01norm",
     "phase": "train",
     "distributed": false,
+    "amp": false,
     "path": {
         "log": "logs",
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": "wollombi-5-01norm/checkpoint/I400000_E92"
+        "resume_state": "wollombi-5-01norm/checkpoint/I800000_E184"
     },
     "datasets": {
         "meta": {
@@ -64,6 +65,7 @@
             "test": {
                 "schedule": "linear",
                 "n_timestep": 1000,
+                "backward_start": 100,
                 "linear_start": 1e-6,
                 "linear_end": 1e-2
             }
@@ -76,13 +78,13 @@
         }
     },
     "train": {
-        "n_iter": 400000,
+        "n_iter": 800000,
         "val_freq": 5e4,
-        "save_checkpoint_freq": 1e5,
+        "save_checkpoint_freq": 5e4,
         "print_freq": 1000,
         "optimizer": {
             "type": "adam",
-            "lr": 1e-5
+            "lr": 1e-6
         },
         "ema_scheduler": {
             "step_start_ema": 5000,

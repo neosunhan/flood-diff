@@ -55,8 +55,8 @@ def test(diffusion, opt, test_loader):
     mse_loss_sum = torch.nn.MSELoss(reduction="sum")
 
     result_path = opt['path']['results']
-    n_channels = opt["model"]["diffusion"]["channels"]
-    image_size = opt["model"]["diffusion"]["image_size"]
+    n_channels = opt["datasets"]["meta"]["channels"]
+    image_size = opt["datasets"]["meta"]["image_size"]
     max_depth = opt["datasets"]["meta"]["max_depth"]
     norm_range = (opt["datasets"]["meta"]["norm_min"], opt["datasets"]["meta"]["norm_max"])
     mse_coeff = (norm_range[1] - norm_range[0]) ** 2

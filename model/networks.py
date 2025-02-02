@@ -83,7 +83,7 @@ def define_generator(opt):
     if model_opt['which_model_G'] == 'ddpm':
         from model.ddpm_modules import diffusion, unet
     elif model_opt['which_model_G'] == 'sr3':
-        from model.sr3_modules import diffusion, unet
+        from model.sr3_modules import diffusion, unet, autoencoder
 
     model = unet.UNet(
         in_channel=model_opt['unet']['in_channel'],
@@ -96,13 +96,19 @@ def define_generator(opt):
         dropout=model_opt['unet']['dropout'],
         image_size=model_opt['diffusion']['image_size']
     )
+
+    if opt["latent"]:
+        vae = autoencoder.VAE()
+        vae_dem = autoencoder.VAE()
+    else:
+        vae, vae_dem = None, None
+
     net_generator = diffusion.GaussianDiffusion(
         model,
-        image_size=model_opt['diffusion']['image_size'],
-        channels=model_opt['diffusion']['channels'],
         loss_type=model_opt['diffusion']['loss_type'],
         conditional=model_opt['diffusion']['conditional'],
-        schedule_opt=model_opt['beta_schedule']['train']
+        vae=vae,
+        vae_dem=vae_dem
     )
 
     if opt['phase'] == 'train':

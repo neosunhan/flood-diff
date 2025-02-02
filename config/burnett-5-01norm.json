@@ -7,7 +7,7 @@
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": "burnett-5-01norm/checkpoint/I100000_E9"
+        "resume_state": "burnett-5-01norm/checkpoint/I400000_E36"
     },
     "datasets": {
         "meta": {
@@ -26,8 +26,8 @@
             "data_len": -1
         },
         "test": {
-            "catchment": "Burnett 1k",
-            "dataroot": "../data/burnett_1k",
+            "catchment": "Chowilla 1k",
+            "dataroot": "../data/chowilla_1k",
             "batch_size": 8,
             "use_shuffle": true,
             "data_len": -1

@@ -6,7 +6,8 @@ import os
 import model.networks as networks
 from model.base_model import BaseModel
 logger = logging.getLogger('base')
-
+from torch.amp import autocast
+scaler = torch.amp.GradScaler('cuda')
 
 class DDPM(BaseModel):
     def __init__(self, opt):
@@ -16,9 +17,13 @@ class DDPM(BaseModel):
         self.schedule_phase = None
         self.saved_checkpoints = []
 
+        if opt['latent']:
+            self.netG.load_vae(opt['path']['vae_state'], opt['path']['vae_dem_state'])
+
         # set loss and load resume state
         self.set_loss()
         self.set_new_noise_schedule(opt['model']['beta_schedule']['train'], schedule_phase='train')
+        self.amp = self.opt['amp']
         if self.opt['phase'] == 'train':
             self.netG.train()
             # find the parameters to optimize
@@ -32,7 +37,7 @@ class DDPM(BaseModel):
                         optim_params.append(v)
                         logger.info(f'Params [{k}] initialized to 0 and will optimize.')
             else:
-                optim_params = list(self.netG.parameters())
+                optim_params = [param for param in self.netG.parameters() if param.requires_grad]
 
             self.optG = torch.optim.Adam(optim_params, lr=opt['train']["optimizer"]["lr"])
             self.log_dict = OrderedDict()
@@ -44,12 +49,21 @@ class DDPM(BaseModel):
 
     def optimize_parameters(self):
         self.optG.zero_grad()
-        l_pix = self.netG(self.data)
-        # need to average in multi-gpu
-        b, c, h, w = self.data['HR'].shape
-        l_pix = l_pix.sum() / int(b * c * h * w)
-        l_pix.backward()
-        self.optG.step()
+        if self.amp:
+            with torch.autocast('cuda'):
+                l_pix = self.netG(self.data)
+                b, c, h, w = self.data['HR'].shape
+                l_pix = l_pix.sum() / int(b * c * h * w)
+            scaler.scale(l_pix).backward()
+            scaler.step(self.optG)
+            scaler.update()
+        else:
+            l_pix = self.netG(self.data)
+            # need to average in multi-gpu
+            b, c, h, w = self.data['HR'].shape
+            l_pix = l_pix.sum() / int(b * c * h * w)
+            l_pix.backward()
+            self.optG.step()
 
         # set log
         self.log_dict['l_pix'] = l_pix.item()
@@ -57,10 +71,17 @@ class DDPM(BaseModel):
     def test(self):
         self.netG.eval()
         with torch.no_grad():
-            if isinstance(self.netG, nn.DataParallel):
-                self.SR = self.netG.module.super_resolution(self.data['SR'], self.data['DEM'])
+            if self.amp:
+                with torch.autocast('cuda'):
+                    if isinstance(self.netG, nn.DataParallel):
+                        self.SR = self.netG.module.super_resolution(self.data['SR'], self.data['DEM'])
+                    else:
+                        self.SR = self.netG.super_resolution(self.data['SR'], self.data['DEM'])
             else:
-                self.SR = self.netG.super_resolution(self.data['SR'], self.data['DEM'])
+                if isinstance(self.netG, nn.DataParallel):
+                    self.SR = self.netG.module.super_resolution(self.data['SR'], self.data['DEM'])
+                else:
+                    self.SR = self.netG.super_resolution(self.data['SR'], self.data['DEM'])
         self.netG.train()
 
     def set_loss(self):
@@ -150,3 +171,8 @@ class DDPM(BaseModel):
                 self.optG.load_state_dict(opt['optimizer'])
                 self.begin_step = opt['iter']
                 self.begin_epoch = opt['epoch']
+
+        if self.opt['latent']:
+            enc_dec_states = [self.opt['path'][checkpoint] for checkpoint in ('encoder_state', 'encoder_lr_state', 'encoder_dem_state', 'decoder_state')]
+            if any(checkpoint is not None for checkpoint in enc_dec_states):
+                self.netG.load_enc_dec(*enc_dec_states)

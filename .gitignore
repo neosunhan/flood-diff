@@ -129,6 +129,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-train.sh
-test.sh
+train*.sh
+test*.sh
 analysis/

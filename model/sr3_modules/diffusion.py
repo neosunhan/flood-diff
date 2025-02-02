@@ -33,18 +33,17 @@ class GaussianDiffusion(nn.Module):
     def __init__(
         self,
         denoise_fn,
-        image_size,
-        channels=3,
         loss_type='l1',
         conditional=True,
-        schedule_opt=None
-    ):
+        vae=None,
+        vae_dem=None
+   ):
         super().__init__()
         self.denoise_fn = denoise_fn
-        self.image_size = image_size
-        self.channels = channels
         self.loss_type = loss_type
         self.conditional = conditional
+        self.vae = vae
+        self.vae_dem = vae_dem
 
     def set_loss(self, device):
         if self.loss_type == 'l1':
@@ -53,6 +52,16 @@ class GaussianDiffusion(nn.Module):
             self.loss_func = nn.MSELoss(reduction='sum').to(device)
         else:
             raise NotImplementedError(f"{self.loss_type} loss not implemented")
+        
+    def load_vae(self, vae_checkpoint, vae_dem_checkpoint):
+        assert self.vae is not None and self.vae_dem is not None, "VAE missing"
+        vae_state = torch.load(vae_checkpoint, weights_only=True)
+        self.vae.load_state_dict(vae_state["model_state_dict"])
+        self.vae.requires_grad_(False)
+
+        vae_dem_state = torch.load(vae_dem_checkpoint, weights_only=True)
+        self.vae_dem.load_state_dict(vae_dem_state["model_state_dict"])
+        self.vae_dem.requires_grad_(False)
 
     def set_new_noise_schedule(self, schedule_opt, device):
         to_torch = partial(torch.tensor, dtype=torch.float32, device=device)
@@ -70,6 +79,7 @@ class GaussianDiffusion(nn.Module):
 
         timesteps, = betas.shape
         self.num_timesteps = int(timesteps)
+        self.backward_start = schedule_opt.get('backward_start')
         self.register_buffer('betas', to_torch(betas))
         self.register_buffer('alphas_cumprod', to_torch(alphas_cumprod))
         self.register_buffer('alphas_cumprod_prev', to_torch(alphas_cumprod_prev))
@@ -124,10 +134,35 @@ class GaussianDiffusion(nn.Module):
     def p_sample_loop(self, x_in, dem):
         device = self.betas.device
         x = x_in
+        if self.vae is not None and self.vae_dem is not None:
+            x, _, _ = self.vae.encode(x)
+            dem, _, _ = self.vae_dem.encode(dem)
         shape = x.shape
-        img = torch.randn(shape, device=device)
-        for i in reversed(range(self.num_timesteps)):
+        if self.backward_start is None:
+            backward_start = self.num_timesteps
+            img = torch.randn(shape, device=device)
+        else:
+            x_start = x
+            [b, c, h, w] = x_start.shape
+            backward_start = self.backward_start
+            continuous_sqrt_alpha_cumprod = torch.FloatTensor(
+                np.random.uniform(
+                    self.sqrt_alphas_cumprod_prev[backward_start-1],
+                    self.sqrt_alphas_cumprod_prev[backward_start],
+                    size=b
+                )
+            ).to(x_start.device)
+            continuous_sqrt_alpha_cumprod = continuous_sqrt_alpha_cumprod.view(b, -1)
+            noise = torch.randn_like(x_start)
+            img = self.q_sample(
+                x_start=x_start, continuous_sqrt_alpha_cumprod=continuous_sqrt_alpha_cumprod.view(-1, 1, 1, 1), noise=noise)            
+            
+        for i in reversed(range(backward_start)):
             img = self.p_sample(img, i, condition_x=x, dem=dem)
+        
+        if self.vae is not None and self.vae_dem is not None:
+            img = self.vae.decode(img)
+
         return img
 
     @torch.no_grad()
@@ -143,6 +178,14 @@ class GaussianDiffusion(nn.Module):
 
     def p_losses(self, x_in, noise=None):
         x_start = x_in['HR']
+        lr_imgs = x_in['SR']
+        dem_imgs = x_in["DEM"]
+
+        if self.vae is not None and self.vae_dem is not None:
+            x_start, _, _ = self.vae.encode(x_start)
+            lr_imgs, _, _ = self.vae.encode(lr_imgs)
+            dem_imgs, _, _ = self.vae_dem.encode(dem_imgs)
+
         [b, c, h, w] = x_start.shape
         t = np.random.randint(1, self.num_timesteps + 1)
         continuous_sqrt_alpha_cumprod = torch.FloatTensor(
@@ -163,7 +206,7 @@ class GaussianDiffusion(nn.Module):
             x_recon = self.denoise_fn(x_noisy, continuous_sqrt_alpha_cumprod)
         else:
             x_recon = self.denoise_fn(
-                torch.cat([x_in['SR'], x_noisy, x_in["DEM"]], dim=1), continuous_sqrt_alpha_cumprod)
+                torch.cat([lr_imgs, x_noisy, dem_imgs], dim=1), continuous_sqrt_alpha_cumprod)
 
         loss = self.loss_func(noise, x_recon)
         return loss
