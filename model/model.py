@@ -13,18 +13,19 @@ class DDPM(BaseModel):
     def __init__(self, opt):
         super(DDPM, self).__init__(opt)
         # define network and load pretrained models
-        self.netG = self.set_device(networks.define_generator(opt))
+        gen, (vae, vae_dem) = networks.define_generator(opt)
+        self.netG = self.set_device(gen)
+        if vae is not None and vae_dem is not None:
+            vae = self.set_device(vae)
+            vae_dem = self.set_device(vae_dem)
         self.schedule_phase = None
         self.saved_checkpoints = []
-
-        if opt['latent']:
-            self.netG.load_vae(opt['path']['vae_state'], opt['path']['vae_dem_state'])
 
         # set loss and load resume state
         self.set_loss()
         self.set_new_noise_schedule(opt['model']['beta_schedule']['train'], schedule_phase='train')
-        self.amp = self.opt['amp']
-        if self.opt['phase'] == 'train':
+        self.amp = opt['amp']
+        if opt['phase'] == 'train':
             self.netG.train()
             # find the parameters to optimize
             if opt['model']['finetune_norm']:
@@ -42,6 +43,8 @@ class DDPM(BaseModel):
             self.optG = torch.optim.Adam(optim_params, lr=opt['train']["optimizer"]["lr"])
             self.log_dict = OrderedDict()
         self.load_network()
+        if opt['latent'] and opt['phase'] == 'test':
+            self.netG.load_vae(vae, vae_dem, opt['path']['vae_state'], opt['path']['vae_dem_state'])
         self.print_network()
 
     def feed_data(self, data):
@@ -171,8 +174,3 @@ class DDPM(BaseModel):
                 self.optG.load_state_dict(opt['optimizer'])
                 self.begin_step = opt['iter']
                 self.begin_epoch = opt['epoch']
-
-        if self.opt['latent']:
-            enc_dec_states = [self.opt['path'][checkpoint] for checkpoint in ('encoder_state', 'encoder_lr_state', 'encoder_dem_state', 'decoder_state')]
-            if any(checkpoint is not None for checkpoint in enc_dec_states):
-                self.netG.load_enc_dec(*enc_dec_states)

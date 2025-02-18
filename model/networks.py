@@ -97,7 +97,7 @@ def define_generator(opt):
         image_size=model_opt['diffusion']['image_size']
     )
 
-    if opt["latent"]:
+    if opt["latent"] and opt["phase"] == 'test':
         vae = autoencoder.VAE()
         vae_dem = autoencoder.VAE()
     else:
@@ -107,8 +107,6 @@ def define_generator(opt):
         model,
         loss_type=model_opt['diffusion']['loss_type'],
         conditional=model_opt['diffusion']['conditional'],
-        vae=vae,
-        vae_dem=vae_dem
     )
 
     if opt['phase'] == 'train':
@@ -118,5 +116,8 @@ def define_generator(opt):
     if opt['distributed']:
         assert torch.cuda.is_available()
         net_generator = nn.DataParallel(net_generator)
+        if vae is not None and vae_dem is not None:
+            vae = nn.DataParallel(vae)
+            vae_dem = nn.DataParallel(vae_dem)
 
-    return net_generator
+    return net_generator, (vae, vae_dem)

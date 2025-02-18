@@ -10,18 +10,18 @@
         "results": "results",
         "checkpoint": "checkpoint",
         "resume_state": "burnett-latent/checkpoint/I400000_E36",
-        "encoder_state": "enc_dec_burnett/encoder.pth",
-        "encoder_lr_state": "enc_dec_burnett/encoder_lr.pth",
-        "encoder_dem_state": "enc_dec_burnett/encoder_dem.pth",
-        "decoder_state": "enc_dec_burnett/decoder.pth"
+        "vae_state": "enc_dec_burnett/encoder.pth",
+        "vae_dem_state": "enc_dec_burnett/encoder_dem.pth"
     },
     "datasets": {
         "meta": {
             "max_depth": 3200,
             "dem_max_value": 440,
             "dem_min_value": -20,
-            "norm_min": 0,
-            "norm_max": 1
+            "norm_min": -1,
+            "norm_max": 1,
+            "channels": 1,
+            "image_size": 512
         },
         "train": {
             "catchment": "Burnett",
@@ -45,7 +45,7 @@
         "unet": {
             "in_channel": 12,
             "out_channel": 4,
-            "inner_channel": 160,
+            "inner_channel": 128,
             "norm_groups": 16,
             "channel_multiplier": [
                 1,
@@ -54,8 +54,8 @@
                 4
             ],
             "attn_res": [
-                16,
-                8
+                8,
+                16
             ],
             "res_blocks": 2,
             "dropout": 0
@@ -77,8 +77,7 @@
         },
         "diffusion": {
             "image_size": 64,
-            "channels": 1,
-            "loss_type": "l1",
+            "loss_type": "l2",
             "conditional": true 
         }
     },

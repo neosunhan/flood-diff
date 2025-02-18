@@ -10,7 +10,7 @@ import core.metrics as Metrics
 from tqdm import tqdm
 
 
-def train(diffusion, opt, train_loader, test_loader):
+def train(diffusion, opt, train_loader, valid_loader=None):
     diffusion.set_new_noise_schedule(opt['model']['beta_schedule']['train'], schedule_phase='train')
     current_step = diffusion.begin_step
     current_epoch = diffusion.begin_epoch
@@ -38,8 +38,8 @@ def train(diffusion, opt, train_loader, test_loader):
                 logger.info(message)
 
             # validation
-            if current_step % opt['train']['val_freq'] == 0:
-                test(diffusion, opt, test_loader)
+            if valid_loader is not None and current_step % opt['train']['val_freq'] == 0:
+                test(diffusion, opt, valid_loader)
                 diffusion.set_new_noise_schedule(opt['model']['beta_schedule']['train'], schedule_phase='train')
 
             if current_step % opt['train']['save_checkpoint_freq'] == 0:
@@ -127,13 +127,18 @@ if __name__ == "__main__":
     torch.backends.cudnn.benchmark = True
 
     # dataset
-    for phase, dataset_opt in opt['datasets'].items():
-        if phase == 'train' == args.phase:
-            train_set = Data.create_dataset(dataset_opt, phase, opt["datasets"]["meta"])
-            train_loader = Data.create_dataloader(train_set, dataset_opt, phase)
-        elif phase == 'test':
-            test_set = Data.create_dataset(dataset_opt, phase, opt["datasets"]["meta"])
-            test_loader = Data.create_dataloader(test_set, dataset_opt, phase)
+    if args.phase == 'train':
+        train_set = Data.create_dataset(opt['datasets']['train'], 'train', opt["datasets"]["meta"], opt["latent"])
+        train_loader = Data.create_dataloader(train_set, opt['datasets']['train'], 'train')
+        if opt["latent"]:
+            valid_loader = None
+        else:
+            valid_set = Data.create_dataset(opt['datasets']['valid'], 'test', opt["datasets"]["meta"], opt["latent"])
+            valid_loader = Data.create_dataloader(valid_set, opt['datasets']['valid'], 'test')
+
+    elif args.phase == 'test':
+        test_set = Data.create_dataset(opt['datasets']['test'], 'test', opt["datasets"]["meta"], latent=False)
+        test_loader = Data.create_dataloader(test_set, opt['datasets']['test'], 'test')
     logger.info('Initial Dataset Finished')
 
     # model
@@ -142,7 +147,7 @@ if __name__ == "__main__":
 
     if opt['phase'] == 'train':
         logger.info('Begin training.')
-        train(diffusion, opt, train_loader, test_loader)
+        train(diffusion, opt, train_loader, valid_loader)
         logger.info('End of training.')
     else:
         logger.info('Begin testing.')

@@ -1,5 +1,5 @@
 {
-    "name": "wollombi-latent",
+    "name": "wollombi-no-kld",
     "phase": "train",
     "distributed": false,
     "amp": false,
@@ -9,9 +9,9 @@
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": "wollombi-latent/checkpoint/I600000_E138",
-        "vae_state": "../autoencoder/wollombi_alt/checkpoint/model_and_optimizer_epoch_25.pth",
-        "vae_dem_state": "../autoencoder/all_dem/checkpoint/model_and_optimizer_epoch_2400.pth"
+        "resume_state": "wollombi-no-kld/checkpoint/I200000_E46",
+        "vae_state": "../autoencoder/all_recon/checkpoint/model_and_optimizer_epoch_1.pth",
+        "vae_dem_state": "../autoencoder/all_dem_recon/checkpoint/model_and_optimizer_epoch_1000.pth"
     },
     "datasets": {
         "meta": {
@@ -77,18 +77,18 @@
         },
         "diffusion": {
             "image_size": 64,
-            "loss_type": "l1",
+            "loss_type": "l2",
             "conditional": true 
         }
     },
     "train": {
-        "n_iter": 600000,
-        "val_freq": 5e4,
-        "save_checkpoint_freq": 5e4,
+        "n_iter": 400000,
+        "val_freq": 1e5,
+        "save_checkpoint_freq": 1e5,
         "print_freq": 1000,
         "optimizer": {
             "type": "adam",
-            "lr": 1e-8
+            "lr": 1e-6
         },
         "ema_scheduler": {
             "step_start_ema": 5000,

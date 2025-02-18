@@ -37,12 +37,6 @@ def parse(args):
         opt['model']['beta_schedule']['test']['n_timestep'] = 10
         opt['datasets']['train']['data_len'] = 6
         opt['datasets']['test']['data_len'] = 3
-
-    # validation in train phase
-    if phase == 'train':
-        opt['datasets']['test']['data_len'] = 3
-        opt['datasets']['test']['batch_size'] = 1
-        opt['datasets']['test']['use_shuffle'] = False
     
     return opt
 

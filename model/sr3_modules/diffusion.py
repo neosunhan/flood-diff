@@ -3,7 +3,6 @@ import torch
 from torch import nn
 from functools import partial
 import numpy as np
-from tqdm import tqdm
 
 
 def make_beta_schedule(schedule, n_timestep, linear_start=1e-4, linear_end=2e-2, cosine_s=8e-3):
@@ -35,15 +34,13 @@ class GaussianDiffusion(nn.Module):
         denoise_fn,
         loss_type='l1',
         conditional=True,
-        vae=None,
-        vae_dem=None
    ):
         super().__init__()
         self.denoise_fn = denoise_fn
         self.loss_type = loss_type
         self.conditional = conditional
-        self.vae = vae
-        self.vae_dem = vae_dem
+        self.vae = None
+        self.vae_dem = None
 
     def set_loss(self, device):
         if self.loss_type == 'l1':
@@ -53,14 +50,33 @@ class GaussianDiffusion(nn.Module):
         else:
             raise NotImplementedError(f"{self.loss_type} loss not implemented")
         
-    def load_vae(self, vae_checkpoint, vae_dem_checkpoint):
-        assert self.vae is not None and self.vae_dem is not None, "VAE missing"
-        vae_state = torch.load(vae_checkpoint, weights_only=True)
-        self.vae.load_state_dict(vae_state["model_state_dict"])
-        self.vae.requires_grad_(False)
+    def load_vae(self, vae, vae_dem, vae_checkpoint, vae_dem_checkpoint):
+        # assert self.vae is not None and self.vae_dem is not None, "VAE missing"
+        self.vae = vae
+        self.vae_dem = vae_dem
 
-        vae_dem_state = torch.load(vae_dem_checkpoint, weights_only=True)
-        self.vae_dem.load_state_dict(vae_dem_state["model_state_dict"])
+        if "enc_dec" in vae_checkpoint:
+            dec_checkpoint = vae_checkpoint.replace("encoder", "decoder")
+            enc_checkpoint = vae_checkpoint
+            enc_state = torch.load(enc_checkpoint, weights_only=True)
+            self.vae.encoder = torch.nn.DataParallel(self.vae.encoder)
+            self.vae.encoder.load_state_dict(enc_state["model_state_dict"])
+            dec_state = torch.load(dec_checkpoint, weights_only=True)
+            self.vae.decoder = torch.nn.DataParallel(self.vae.decoder)
+            self.vae.decoder.load_state_dict(dec_state["model_state_dict"])
+
+            enc_dem_state = torch.load(vae_dem_checkpoint, weights_only=True)
+            self.vae_dem.encoder = torch.nn.DataParallel(self.vae_dem.encoder)
+            self.vae_dem.encoder.load_state_dict(enc_dem_state["model_state_dict"])
+            self.vae_dem.decoder = torch.nn.DataParallel(self.vae_dem.decoder)
+        else:
+            vae_state = torch.load(vae_checkpoint, weights_only=True)
+            self.vae.load_state_dict(vae_state["model_state_dict"])
+
+            vae_dem_state = torch.load(vae_dem_checkpoint, weights_only=True)
+            self.vae_dem.load_state_dict(vae_dem_state["model_state_dict"])
+
+        self.vae.requires_grad_(False)
         self.vae_dem.requires_grad_(False)
 
     def set_new_noise_schedule(self, schedule_opt, device):
