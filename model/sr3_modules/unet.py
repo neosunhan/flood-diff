@@ -22,7 +22,7 @@ class FeatureWiseAffine(nn.Module):
         super(FeatureWiseAffine, self).__init__()
         self.use_affine_level = use_affine_level
         self.noise_func = nn.Sequential(
-            nn.Linear(in_channels, out_channels*(1 + self.use_affine_level))
+            nn.Linear(in_channels, out_channels * (1 + self.use_affine_level))
         )
 
     def forward(self, x, noise_embed):

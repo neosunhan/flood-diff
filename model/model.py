@@ -41,11 +41,23 @@ class DDPM(BaseModel):
                 optim_params = [param for param in self.netG.parameters() if param.requires_grad]
 
             self.optG = torch.optim.Adam(optim_params, lr=opt['train']["optimizer"]["lr"])
+            if opt['train']['optimizer']['lr_scheduler'] is not None:
+                if opt['train']['optimizer']['lr_scheduler']['schedule'] == "linear_warmup":
+                    lr_lambda = lambda cur_step: min(cur_step / opt['train']['optimizer']['lr_scheduler']['until'], 1.0)
+                else:
+                    raise NotImplementedError(opt['train']['optimizer']['lr_scheduler']['schedule'])
+                self.scheduleG = torch.optim.lr_scheduler.LambdaLR(self.optG, lr_lambda=lr_lambda)
+            else:
+                self.scheduleG = torch.optim.lr_scheduler.LambdaLR(self.optG, lr_lambda=lambda _: 1)
             self.log_dict = OrderedDict()
         self.load_network()
         if opt['latent'] and opt['phase'] == 'test':
             self.netG.load_vae(vae, vae_dem, opt['path']['vae_state'], opt['path']['vae_dem_state'])
         self.print_network()
+
+    @property
+    def lr(self):
+        return self.scheduleG.get_last_lr()[0]
 
     def feed_data(self, data):
         self.data = self.set_device(data)
@@ -67,9 +79,12 @@ class DDPM(BaseModel):
             l_pix = l_pix.sum() / int(b * c * h * w)
             l_pix.backward()
             self.optG.step()
+        
+        self.scheduleG.step()
 
         # set log
         self.log_dict['l_pix'] = l_pix.item()
+        self.log_dict['lr'] = self.lr
 
     def test(self):
         self.netG.eval()
@@ -174,3 +189,5 @@ class DDPM(BaseModel):
                 self.optG.load_state_dict(opt['optimizer'])
                 self.begin_step = opt['iter']
                 self.begin_epoch = opt['epoch']
+                for _ in range(self.begin_step):
+                    self.scheduleG.step()

@@ -80,6 +80,7 @@ class GaussianDiffusion(nn.Module):
         self.vae_dem.requires_grad_(False)
 
     def set_new_noise_schedule(self, schedule_opt, device):
+        self.num_timesteps = schedule_opt['n_timestep']
         to_torch = partial(torch.tensor, dtype=torch.float32, device=device)
 
         betas = make_beta_schedule(
@@ -93,8 +94,6 @@ class GaussianDiffusion(nn.Module):
         alphas_cumprod_prev = np.append(1., alphas_cumprod[:-1])
         self.sqrt_alphas_cumprod_prev = np.sqrt(np.append(1., alphas_cumprod))
 
-        timesteps, = betas.shape
-        self.num_timesteps = int(timesteps)
         self.backward_start = schedule_opt.get('backward_start')
         self.register_buffer('betas', to_torch(betas))
         self.register_buffer('alphas_cumprod', to_torch(alphas_cumprod))
