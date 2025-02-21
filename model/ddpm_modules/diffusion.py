@@ -80,8 +80,8 @@ class GaussianDiffusion(nn.Module):
         :param t: Current time step
         """
         # Original Image Prediction at timestep t
-        x0 = xt - torch.sqrt(1 - self.alphas_cumprod[t]) * noise_pred
-        x0 = x0 / torch.sqrt(self.alphas_cumprod[t])
+        # x0 = xt - torch.sqrt(1 - self.alphas_cumprod[t]) * noise_pred
+        # x0 = x0 / torch.sqrt(self.alphas_cumprod[t])
         # x0 = torch.clamp(x0, -1., 1.) 
         
         # mean of x_(t-1)
@@ -90,13 +90,13 @@ class GaussianDiffusion(nn.Module):
         
         # only return mean
         if t == 0:
-            return mean, x0
+            return mean
         else:
             variance =  (1 - self.alphas_cumprod[t-1]) / (1 - self.alphas_cumprod[t])
             variance = variance * self.betas[t]
             sigma = variance ** 0.5
             z = torch.randn_like(xt)
-            return mean + sigma * z, x0
+            return mean + sigma * z
     
     @torch.no_grad()
     def add_noise(self, original, noise, t):
@@ -133,11 +133,11 @@ class GaussianDiffusion(nn.Module):
             t = torch.tensor(backward_start).repeat(lr_img.shape[0])
             noise_img = self.add_noise(lr_img, noise, t)
 
-        for i in reversed(range(backward_start)):
-            t = torch.tensor(i, dtype=torch.long).repeat(lr_img.shape[0]).to(lr_img.device)
+        for t in reversed(range(backward_start)):
+            t_tensor = torch.tensor(t, dtype=torch.long).repeat(lr_img.shape[0]).to(lr_img.device)
             input_unet = torch.cat([noise_img, lr_img, dem], dim=1).to(lr_img.device)
-            noise_pred = self.denoise_fn(input_unet, t)
-            noise_img, _ = self.sample_prev_timestep(noise_img.detach(), noise_pred, t)
+            noise_pred = self.denoise_fn(input_unet, t_tensor)
+            noise_img = self.sample_prev_timestep(noise_img.detach(), noise_pred, t)
 
         pred_imgs = self.vae.decode(noise_img)
         return pred_imgs
