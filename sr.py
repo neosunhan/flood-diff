@@ -151,5 +151,15 @@ if __name__ == "__main__":
         logger.info('End of training.')
     else:
         logger.info('Begin testing.')
-        test(diffusion, opt, test_loader)
+        num_epochs = opt['datasets']['test']['epochs']
+        input_mse, predicted_mse = 0, 0
+        for i in range(1, num_epochs + 1):
+            logger.info(f"Test epoch {i}/{num_epochs}:")
+            epoch_input_mse, epoch_predicted_mse = test(diffusion, opt, test_loader)
+            input_mse += epoch_input_mse
+            predicted_mse += epoch_predicted_mse
+        input_mse /= num_epochs
+        predicted_mse /= num_epochs
+        logger.info(f"# Average MSE (CG to FG): {input_mse:.4f}")
+        logger.info(f"# Average MSE (SR to FG): {predicted_mse:.4f}")
         logger.info('End of testing.')

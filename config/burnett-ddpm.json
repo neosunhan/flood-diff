@@ -9,7 +9,7 @@
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": "burnett-ddpm/checkpoint/I80000_E229",
+        "resume_state": "burnett-ddpm/checkpoint/I160000_E457",
         "vae_state": "../autoencoder/all_std/checkpoint/model_and_optimizer_epoch_3.pth",
         "vae_dem_state": "../autoencoder/all_dem_std/checkpoint/model_and_optimizer_epoch_2000.pth"
     },
@@ -25,7 +25,7 @@
         },
         "train": {
             "catchment": "Burnett Latent",
-            "dataroot": "../autoencoder/all_std/latent/burnett",
+            "dataroot": "../autoencoder/all_std/latent/ep3/burnett",
             "batch_size": 256,
             "num_workers": 1,
             "use_shuffle": true,
@@ -35,8 +35,9 @@
             "catchment": "Burnett 1k",
             "dataroot": "../data/burnett_1k",
             "batch_size": 40,
-            "use_shuffle": true,
-            "data_len": -1
+            "use_shuffle": false,
+            "data_len": -1,
+            "epochs": 10
         }
     },
     "model": {
@@ -70,6 +71,7 @@
             "test": {
                 "schedule": "linear",
                 "n_timestep": 1000,
+                "backward_start": null,
                 "linear_start": 1e-6,
                 "linear_end": 1e-2
             }
@@ -81,13 +83,13 @@
         }
     },
     "train": {
-        "n_iter": 80000,
+        "n_iter": 200000,
         "val_freq": 2e4,
-        "save_checkpoint_freq": 1e4,
+        "save_checkpoint_freq": 2e4,
         "print_freq": 500,
         "optimizer": {
             "type": "adam",
-            "lr": 1e-5,
+            "lr": 1e-6,
             "lr_scheduler": {
                 "schedule": "linear_warmup",
                 "until": 10000

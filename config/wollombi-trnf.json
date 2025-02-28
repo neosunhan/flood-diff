@@ -1,71 +1,63 @@
 {
-    "name": "wollombi-pregen-latent",
+    "name": "wollombi-trnf",
     "phase": "train",
     "distributed": false,
-    "amp": false,
+    "amp": true,
     "latent": true,
     "path": {
         "log": "logs",
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": "wollombi-pregen-latent/checkpoint/I200000_E1460",
-        "vae_state": "../autoencoder/all_no_kld/checkpoint/model_and_optimizer_epoch_2.pth",
-        "vae_dem_state": "../autoencoder/all_dem_no_kld/checkpoint/model_and_optimizer_epoch_2000.pth"
+        "resume_state": "wollombi-ddpm/checkpoint/I100000_E730",
+        "vae_state": "../autoencoder/all_std/checkpoint/model_and_optimizer_epoch_5.pth",
+        "vae_dem_state": "../autoencoder/all_dem_std/checkpoint/model_and_optimizer_epoch_2000.pth"
     },
     "datasets": {
         "meta": {
             "max_depth": 3200,
             "dem_max_value": 440,
             "dem_min_value": -20,
-            "norm_min": 0,
+            "norm_min": -1,
             "norm_max": 1,
             "channels": 1,
             "image_size": 512
         },
         "train": {
             "catchment": "Wollombi Latent",
-            "dataroot": "../autoencoder/all_no_kld/latent/ep_2/wollombi",
+            "dataroot": "../autoencoder/all_std/latent/ep5/wollombi",
             "batch_size": 256,
             "num_workers": 1,
             "use_shuffle": true,
             "data_len": -1
-        },
-        "valid": {
-            "catchment": "Wollombi Latent",
-            "dataroot": "../autoencoder/all_no_kld/latent/wollombi",
-            "batch_size": 256,
-            "num_workers": 1,
-            "use_shuffle": false,
-            "data_len": 1024
         },
         "test": {
             "catchment": "Wollombi 1k",
             "dataroot": "../data/wollombi_1k",
-            "batch_size": 8,
-            "use_shuffle": true,
+            "batch_size": 40,
+            "use_shuffle": false,
             "data_len": -1
         }
     },
     "model": {
-        "which_model_G": "sr3",
+        "which_model_G": "ddpm",
         "finetune_norm": false,
         "unet": {
             "in_channel": 12,
             "out_channel": 4,
-            "inner_channel": 128,
+            "inner_channel": 64,
             "norm_groups": 16,
             "channel_multiplier": [
                 1,
                 2,
-                2,
-                4
-            ],
-            "attn_res": [
+                4,
                 8,
                 16
             ],
-            "res_blocks": 2,
+            "attn_res": [
+                16
+            ],
+            "res_blocks": 1,
             "dropout": 0
         },
         "beta_schedule": {
@@ -78,7 +70,6 @@
             "test": {
                 "schedule": "linear",
                 "n_timestep": 1000,
-                "backward_start": null,
                 "linear_start": 1e-6,
                 "linear_end": 1e-2
             }
@@ -91,24 +82,20 @@
     },
     "train": {
         "n_iter": 200000,
-        "val_freq": 5e4,
-        "save_checkpoint_freq": 5e4,
-        "print_freq": 1000,
+        "val_freq": 2e4,
+        "save_checkpoint_freq": 2e4,
+        "print_freq": 500,
         "optimizer": {
             "type": "adam",
-            "lr": 1e-7
-        },
-        "ema_scheduler": {
-            "step_start_ema": 5000,
-            "update_ema_every": 1,
-            "ema_decay": 0.9999
+            "lr": 1e-6,
+            "lr_scheduler": {
+                "schedule": "linear_warmup",
+                "until": 10000
+            }
         }
     },
     "test": {
         "save_results": false,
         "threshold": 5
-    },
-    "wandb": {
-        "project": "no_project"
     }
 }

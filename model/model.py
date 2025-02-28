@@ -82,9 +82,9 @@ class DDPM(BaseModel):
         
         self.scheduleG.step()
 
-        # set log
-        self.log_dict['l_pix'] = l_pix.item()
-        self.log_dict['lr'] = self.lr
+        # save loss
+        self.cur_l_pix = l_pix
+        
 
     def test(self):
         self.netG.eval()
@@ -117,6 +117,8 @@ class DDPM(BaseModel):
                 self.netG.set_new_noise_schedule(schedule_opt, self.device)
 
     def get_current_log(self):
+        self.log_dict['l_pix'] = self.cur_l_pix.item()
+        self.log_dict['lr'] = self.lr
         return self.log_dict
 
     def get_current_visuals(self, need_LR=True, sample=False):
@@ -143,7 +145,7 @@ class DDPM(BaseModel):
             net_struc_str = f'{self.netG.__class__.__name__}'
 
         logger.info(f'Network G structure: {net_struc_str}, with parameters: {n:,d}')
-        logger.info(s)
+        # logger.info(s)
 
     def save_network(self, epoch, iter_step):
         if (iter_step, epoch) in self.saved_checkpoints:
