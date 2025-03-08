@@ -9,7 +9,7 @@
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": null,
+        "resume_state": "wollombi-latent/checkpoint/I200000_E1460",
         "vae_state": "../autoencoder/all_std/checkpoint/model_and_optimizer_epoch_5.pth",
         "vae_dem_state": "../autoencoder/all_dem_std/checkpoint/model_and_optimizer_epoch_2000.pth"
     },
@@ -32,11 +32,12 @@
             "data_len": -1
         },
         "test": {
-            "catchment": "Wollombi 1k",
-            "dataroot": "../data/wollombi_1k",
+            "catchment": "Chowilla 1k",
+            "dataroot": "../data/chowilla_1k",
             "batch_size": 40,
             "use_shuffle": false,
-            "data_len": -1
+            "data_len": -1,
+            "epochs": 10
         }
     },
     "model": {
@@ -81,13 +82,13 @@
         }
     },
     "train": {
-        "n_iter": 40000,
+        "n_iter": 200000,
         "val_freq": 2e4,
         "save_checkpoint_freq": 2e4,
         "print_freq": 500,
         "optimizer": {
             "type": "adam",
-            "lr": 1e-4,
+            "lr": 1e-6,
             "lr_scheduler": {
                 "schedule": "linear_warmup",
                 "until": 10000

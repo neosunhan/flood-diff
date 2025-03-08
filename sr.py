@@ -4,6 +4,7 @@ import model as Model
 import argparse
 import logging
 import os
+import time
 import logging
 import core.logger as Logger
 import core.metrics as Metrics
@@ -62,6 +63,7 @@ def test(diffusion, opt, test_loader):
     mse_coeff = (norm_range[1] - norm_range[0]) ** 2
     logger = logging.getLogger('base')
     
+    start_time = time.time()
     for val_data in tqdm(test_loader, desc=f"Test batch"):
         diffusion.feed_data(val_data)
         diffusion.test()
@@ -87,6 +89,8 @@ def test(diffusion, opt, test_loader):
                 filename = filenames[i]
                 Metrics.save_flood_map(sr_flood_map[i], os.path.join(result_path, filename), profiles[i])
 
+    end_time = time.time()
+
     total_mse_input /= n_channels * (image_size ** 2)
     total_mse_input /= len(test_loader.dataset)
     total_mse_input *= max_depth ** 2
@@ -101,7 +105,7 @@ def test(diffusion, opt, test_loader):
     logger.info(f"# Validation # MSE (CG to FG): {total_mse_input:.4f}")
     logger.info(f"# Validation # MSE (SR to FG): {total_mse_predicted:.4f}")
 
-    return total_mse_input, total_mse_predicted
+    return total_mse_input, total_mse_predicted, end_time - start_time
 
 
 if __name__ == "__main__":
@@ -152,14 +156,21 @@ if __name__ == "__main__":
     else:
         logger.info('Begin testing.')
         num_epochs = opt['datasets']['test']['epochs']
-        input_mse, predicted_mse = 0, 0
-        for i in range(1, num_epochs + 1):
-            logger.info(f"Test epoch {i}/{num_epochs}:")
-            epoch_input_mse, epoch_predicted_mse = test(diffusion, opt, test_loader)
-            input_mse += epoch_input_mse
-            predicted_mse += epoch_predicted_mse
-        input_mse /= num_epochs
-        predicted_mse /= num_epochs
-        logger.info(f"# Average MSE (CG to FG): {input_mse:.4f}")
-        logger.info(f"# Average MSE (SR to FG): {predicted_mse:.4f}")
+        if num_epochs is None or num_epochs == 1:
+            test(diffusion, opt, test_loader)
+        else:
+            input_mse, predicted_mse = 0, 0
+            time_taken = []
+            for i in range(1, num_epochs + 1):
+                logger.info(f"Test epoch {i}/{num_epochs}:")
+                epoch_input_mse, epoch_predicted_mse, duration = test(diffusion, opt, test_loader)
+                input_mse += epoch_input_mse
+                predicted_mse += epoch_predicted_mse
+                time_taken.append(duration)
+            input_mse /= num_epochs
+            predicted_mse /= num_epochs
+            average_time = sum(time_taken) / len(time_taken)
+            logger.info(f"# Average MSE (CG to FG): {input_mse:.4f}")
+            logger.info(f"# Average MSE (SR to FG): {predicted_mse:.4f}")
+            logger.info(f"Average time taken: {average_time:.2f} seconds")
         logger.info('End of testing.')
