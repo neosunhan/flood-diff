@@ -160,17 +160,22 @@ if __name__ == "__main__":
             test(diffusion, opt, test_loader)
         else:
             input_mse, predicted_mse = 0, 0
+            min_mse, max_mse = float("inf"), float("-inf")
             time_taken = []
             for i in range(1, num_epochs + 1):
                 logger.info(f"Test epoch {i}/{num_epochs}:")
                 epoch_input_mse, epoch_predicted_mse, duration = test(diffusion, opt, test_loader)
                 input_mse += epoch_input_mse
                 predicted_mse += epoch_predicted_mse
+                min_mse = min(min_mse, epoch_predicted_mse)
+                max_mse = max(max_mse, epoch_predicted_mse)
                 time_taken.append(duration)
             input_mse /= num_epochs
             predicted_mse /= num_epochs
             average_time = sum(time_taken) / len(time_taken)
+            max_mse_diff = max(max_mse - predicted_mse, predicted_mse - min_mse)
             logger.info(f"# Average MSE (CG to FG): {input_mse:.4f}")
             logger.info(f"# Average MSE (SR to FG): {predicted_mse:.4f}")
             logger.info(f"Average time taken: {average_time:.2f} seconds")
+            logger.info(f"Uncertainty range: [{min_mse:.4f}, {max_mse:.4f}], \u00B1{max_mse_diff:.4f}")
         logger.info('End of testing.')

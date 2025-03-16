@@ -9,7 +9,7 @@
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": "wollombi-l1/checkpoint/I200000_E1460",
+        "resume_state": "/mnt/scatch/e/e0725702/old_models/wollombi-l1/checkpoint/I200000_E1460",
         "vae_state": "../autoencoder/all_std/checkpoint/model_and_optimizer_epoch_5.pth",
         "vae_dem_state": "../autoencoder/all_dem_std/checkpoint/model_and_optimizer_epoch_2000.pth"
     },
@@ -32,12 +32,12 @@
             "data_len": -1
         },
         "test": {
-            "catchment": "Chowilla 1k",
-            "dataroot": "../data/chowilla_1k",
+            "catchment": "Wollombi 1k",
+            "dataroot": "../data/wollombi_1k",
             "batch_size": 40,
             "use_shuffle": false,
             "data_len": -1,
-            "epochs": 1
+            "epochs": 10
         }
     },
     "model": {

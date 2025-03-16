@@ -9,8 +9,8 @@
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": "wollombi-trnf/checkpoint/I200000_E1460",
-        "vae_state": "../autoencoder/all_std/checkpoint/model_and_optimizer_epoch_5.pth",
+        "resume_state": "wollombi-trnf/checkpoint/I400000_E2920",
+        "vae_state": "../autoencoder/all_std/checkpoint/model_and_optimizer_epoch_10.pth",
         "vae_dem_state": "../autoencoder/all_dem_std/checkpoint/model_and_optimizer_epoch_2000.pth"
     },
     "datasets": {
@@ -24,20 +24,20 @@
             "image_size": 512
         },
         "train": {
-            "catchment": "Wollombi Latent",
-            "dataroot": "../autoencoder/all_std/latent/ep5/wollombi",
+            "catchment": "Burnett Latent",
+            "dataroot": "../autoencoder/all_std/latent/ep10/burnett",
             "batch_size": 256,
             "num_workers": 1,
             "use_shuffle": true,
             "data_len": -1
         },
         "test": {
-            "catchment": "Burnett 1k",
-            "dataroot": "../data/burnett_1k",
+            "catchment": "Wollombi 1k",
+            "dataroot": "../data/wollombi_1k",
             "batch_size": 40,
             "use_shuffle": false,
             "data_len": -1,
-            "epochs": 5
+            "epochs": 10
         }
     },
     "model": {
@@ -70,7 +70,7 @@
             },
             "test": {
                 "schedule": "linear",
-                "n_timestep": 20,
+                "n_timestep": 25,
                 "linear_start": 1e-6,
                 "linear_end": 1e-2
             }
@@ -82,7 +82,7 @@
         }
     },
     "train": {
-        "n_iter": 200000,
+        "n_iter": 400000,
         "val_freq": 2e4,
         "save_checkpoint_freq": 2e4,
         "print_freq": 500,
