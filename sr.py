@@ -3,8 +3,10 @@ import data as Data
 import model as Model
 import argparse
 import logging
+import numpy as np
 import os
 import time
+import datetime
 import logging
 import core.logger as Logger
 import core.metrics as Metrics
@@ -50,7 +52,7 @@ def train(diffusion, opt, train_loader, valid_loader=None):
     return diffusion
 
 
-def test(diffusion, opt, test_loader):
+def test(diffusion, opt, test_loader, progress_bar=True):
     diffusion.set_new_noise_schedule(opt['model']['beta_schedule']['test'], schedule_phase='test')
     total_mse_input, total_mse_predicted = 0.0, 0.0
     mse_loss_sum = torch.nn.MSELoss(reduction="sum")
@@ -63,8 +65,10 @@ def test(diffusion, opt, test_loader):
     mse_coeff = (norm_range[1] - norm_range[0]) ** 2
     logger = logging.getLogger('base')
     
+    if progress_bar:
+        test_loader = tqdm(test_loader, desc=f"Test batch")
     start_time = time.time()
-    for val_data in tqdm(test_loader, desc=f"Test batch"):
+    for val_data in test_loader:
         diffusion.feed_data(val_data)
         diffusion.test()
         visuals = diffusion.get_current_visuals()
@@ -90,6 +94,7 @@ def test(diffusion, opt, test_loader):
                 Metrics.save_flood_map(sr_flood_map[i], os.path.join(result_path, filename), profiles[i])
 
     end_time = time.time()
+    time_taken = datetime.timedelta(seconds=end_time - start_time)
 
     total_mse_input /= n_channels * (image_size ** 2)
     total_mse_input /= len(test_loader.dataset)
@@ -104,8 +109,9 @@ def test(diffusion, opt, test_loader):
     # log
     logger.info(f"# Validation # MSE (CG to FG): {total_mse_input:.4f}")
     logger.info(f"# Validation # MSE (SR to FG): {total_mse_predicted:.4f}")
+    logger.info(f"# Time taken: {str(time_taken)}")
 
-    return total_mse_input, total_mse_predicted, end_time - start_time
+    return total_mse_input, total_mse_predicted, time_taken
 
 
 if __name__ == "__main__":
@@ -159,23 +165,19 @@ if __name__ == "__main__":
         if num_epochs is None or num_epochs == 1:
             test(diffusion, opt, test_loader)
         else:
-            input_mse, predicted_mse = 0, 0
-            min_mse, max_mse = float("inf"), float("-inf")
-            time_taken = []
+            input_mse, predicted_mse = [], []
+            total_duration = datetime.timedelta()
             for i in range(1, num_epochs + 1):
                 logger.info(f"Test epoch {i}/{num_epochs}:")
-                epoch_input_mse, epoch_predicted_mse, duration = test(diffusion, opt, test_loader)
-                input_mse += epoch_input_mse
-                predicted_mse += epoch_predicted_mse
-                min_mse = min(min_mse, epoch_predicted_mse)
-                max_mse = max(max_mse, epoch_predicted_mse)
-                time_taken.append(duration)
-            input_mse /= num_epochs
-            predicted_mse /= num_epochs
-            average_time = sum(time_taken) / len(time_taken)
-            max_mse_diff = max(max_mse - predicted_mse, predicted_mse - min_mse)
-            logger.info(f"# Average MSE (CG to FG): {input_mse:.4f}")
-            logger.info(f"# Average MSE (SR to FG): {predicted_mse:.4f}")
-            logger.info(f"Average time taken: {average_time:.2f} seconds")
-            logger.info(f"Uncertainty range: [{min_mse:.4f}, {max_mse:.4f}], \u00B1{max_mse_diff:.4f}")
+                epoch_input_mse, epoch_predicted_mse, duration = test(diffusion, opt, test_loader, progress_bar=False)
+                input_mse.append(epoch_input_mse)
+                predicted_mse.append(epoch_predicted_mse)
+                total_duration += duration
+            average_time = total_duration / num_epochs
+            average_input_mse = sum(input_mse) / len(input_mse)
+            average_predicted_mse = sum(predicted_mse) / len(predicted_mse)
+            logger.info(f"# Average MSE (CG to FG): {average_input_mse:.4f}")
+            logger.info(f"# Average MSE (SR to FG): {average_predicted_mse:.4f}")
+            logger.info(f"Variance: {np.var(predicted_mse):.2f}, Standard Deviation: {np.std(predicted_mse):.2f}")
+            logger.info(f"Average time taken: {str(average_time)}")
         logger.info('End of testing.')

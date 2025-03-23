@@ -1,5 +1,5 @@
 {
-    "name": "burnett-trnf",
+    "name": "chowilla-burnett",
     "phase": "train",
     "distributed": false,
     "amp": true,
@@ -9,7 +9,7 @@
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": "burnett-trnf/checkpoint/I300000_E856",
+        "resume_state": "chowilla-burnett/checkpoint/I345000_E608",
         "vae_state": "../autoencoder/all_std/checkpoint/model_and_optimizer_epoch_10.pth",
         "vae_dem_state": "../autoencoder/all_dem_std/checkpoint/model_and_optimizer_epoch_2000.pth"
     },
@@ -32,8 +32,8 @@
             "data_len": -1
         },
         "test": {
-            "catchment": "Burnett 1k",
-            "dataroot": "../data/burnett_1k",
+            "catchment": "Wollombi 1k",
+            "dataroot": "../data/wollombi_1k",
             "batch_size": 40,
             "use_shuffle": false,
             "data_len": -1,
@@ -70,7 +70,7 @@
             },
             "test": {
                 "schedule": "linear",
-                "n_timestep": 300,
+                "n_timestep": 1000,
                 "linear_start": 1e-6,
                 "linear_end": 1e-2
             }
@@ -82,9 +82,9 @@
         }
     },
     "train": {
-        "n_iter": 300000,
-        "val_freq": 2e4,
-        "save_checkpoint_freq": 2e4,
+        "n_iter": 350000,
+        "val_freq": 5000,
+        "save_checkpoint_freq": 5000,
         "print_freq": 500,
         "optimizer": {
             "type": "adam",
