@@ -70,7 +70,7 @@
             },
             "test": {
                 "schedule": "linear",
-                "n_timestep": 50,
+                "n_timestep": 1000,
                 "linear_start": 1e-6,
                 "linear_end": 1e-2
             }
@@ -97,6 +97,6 @@
     },
     "test": {
         "save_results": false,
-        "threshold": 5
+        "thresholds": [5, 30]
     }
 }

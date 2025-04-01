@@ -7,8 +7,12 @@ import json
 from torchvision.utils import make_grid
 
 
+def unnormalize(tensor, max_depth, min_max=(-1, 1)):
+    return (tensor - min_max[0]) / (min_max[1] - min_max[0]) * max_depth
+
+
 def tensor2floodmap(tensor, max_depth, threshold, out_type=np.int16, min_max=(-1, 1)):
-    flood_map = (tensor - min_max[0]) / (min_max[1] - min_max[0]) * max_depth
+    flood_map = unnormalize(tensor, max_depth, min_max=min_max)
     flood_map = flood_map.cpu().detach().numpy()
     flood_map = np.where(flood_map < threshold, 0, flood_map)
     flood_map = flood_map.astype(out_type)
