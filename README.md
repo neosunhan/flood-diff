@@ -2,7 +2,7 @@
 Pytorch implementation and pretrained models
 
 ## Pretrained models
-This section contains the latent diffusion model checkpoints. `_gen.pth` files contain the model parameters and are needed for inference, while `_opt.pth` files contain the saved optimizer and are needed for further transfer learning. The pretrained autoencoder checkpoint can be found [here](https://drive.google.com/file/d/1MKWg5LxmM7GLK-EQI7OAfz_NyAq-nxUy/view?usp=sharing).
+This section contains the latent diffusion model checkpoints. `_gen.pth` files contain the model parameters and are needed for inference, while `_opt.pth` files contain the saved optimizer and are needed for further transfer learning. The pretrained autoencoder checkpoint can be found [here](https://drive.google.com/drive/folders/1OurEy9H589z9jXHj-cXtZ1pfyUcCQlIJ?usp=sharing).
 
 | Training Catchment | Download |
 | :----------------: | :------: |
