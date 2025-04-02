@@ -76,7 +76,7 @@ def test(diffusion, opt, test_loader, progress_bar=True):
         sr_image = visuals['SR'].squeeze().clamp(norm_range[0], norm_range[1])
         fg_image = visuals['HR'].squeeze()
         cg_image = visuals['INF'].squeeze()
-        imgs.append(sr_image)
+        imgs.append(sr_image.cpu().detach().numpy())
 
         total_mse_input += mse_loss_sum(cg_image, fg_image).item()
         total_mse_predicted += mse_loss_sum(sr_image, fg_image).item()
@@ -155,7 +155,7 @@ def test(diffusion, opt, test_loader, progress_bar=True):
 
     logger.info(f"# Time taken: {str(time_taken)}")
 
-    return total_mse_input, total_mse_predicted, classification_results, time_taken, torch.cat(imgs)
+    return total_mse_input, total_mse_predicted, classification_results, time_taken, np.concatenate(imgs)
 
 
 if __name__ == "__main__":
@@ -231,16 +231,15 @@ if __name__ == "__main__":
             average_time = total_duration / num_epochs
             average_input_mse = sum(input_mse) / len(input_mse)
             average_predicted_mse = sum(predicted_mse) / len(predicted_mse)
-            all_maps = torch.stack(all_maps)
             logger.info(f"# Average MSE (CG to FG): {average_input_mse:.4f}")
             logger.info(f"# Average MSE (SR to FG): {average_predicted_mse:.4f}")
             for threshold in threshold_csi:
                 for map_type in threshold_csi[threshold]:
                     threshold_csi[threshold][map_type] /= num_epochs
                     logger.info(f"# Threshold {threshold}cm # Average CSI: {threshold_csi[threshold][map_type]:.4f}")
-            variance = torch.var(all_maps, dim=0)
-            std = torch.std(all_maps, dim=0)
-            logger.info(f"Variance: {torch.mean(variance):.2E}, Standard Deviation: {torch.mean(std):.2E}")
+            variance = np.var(all_maps, axis=0)
+            standard_dev = np.std(all_maps, axis=0)
+            logger.info(f"Variance ({variance.shape}): {np.mean(variance):.2E}, Standard Deviation ({standard_dev.shape}): {np.mean(standard_dev):.2E}")
             # logger.info(f"Variance: {np.var(predicted_mse):.2f}, Standard Deviation: {np.std(predicted_mse):.2f}")
             logger.info(f"Average time taken: {str(average_time)}")
         logger.info('End of testing.')

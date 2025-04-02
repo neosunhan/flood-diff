@@ -1,4 +1,16 @@
-# Physics Informed Generative AI for High Resolution Flood mapping
+# Physics Informed Generative AI for High Resolution Flood Mapping
+Pytorch implementation and pretrained models
+
+## Pretrained models
+This section contains the latent diffusion model checkpoints. `_gen.pth` files contain the model parameters and are needed for inference, while `_opt.pth` files contain the saved optimizer and are needed for further transfer learning. The pretrained autoencoder checkpoint can be found [here](https://drive.google.com/file/d/1MKWg5LxmM7GLK-EQI7OAfz_NyAq-nxUy/view?usp=sharing).
+
+| Training Catchment | Download |
+| :----------------: | :------: |
+| Wollombi           | [checkpoint](https://drive.google.com/drive/folders/1lu39Zfs-wA01czTXvnoOOI5LSeClRZk2?usp=sharing) |
+| Burnett            | [checkpoint](https://drive.google.com/drive/folders/1mp4n1uPkRVhe27OpUUnkoE726Wx2agYL?usp=sharing) |
+| Chowilla           | [checkpoint](https://drive.google.com/drive/folders/1m5hnVxXkf6R8kkpJbeKljij_TqobRqSf?usp=sharing) |
+
+
 
 ## Requirements
 Python 3.10.12+
