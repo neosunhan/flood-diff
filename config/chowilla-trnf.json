@@ -37,7 +37,7 @@
             "batch_size": 40,
             "use_shuffle": false,
             "data_len": -1,
-            "epochs": 8
+            "epochs": 10
         }
     },
     "model": {

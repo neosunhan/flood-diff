@@ -2,6 +2,8 @@
     "name": "burnett-5-01norm",
     "phase": "train",
     "distributed": false,
+    "amp": true,
+    "latent": true,
     "path": {
         "log": "logs",
         "tb_logger": "tb_logger",
@@ -15,7 +17,9 @@
             "dem_max_value": 440,
             "dem_min_value": -20,
             "norm_min": 0,
-            "norm_max": 1
+            "norm_max": 1,
+            "channels": 1,
+            "image_size": 512
         },
         "train": {
             "catchment": "Burnett",
@@ -26,11 +30,12 @@
             "data_len": -1
         },
         "test": {
-            "catchment": "Chowilla 1k",
-            "dataroot": "../data/chowilla_1k",
-            "batch_size": 8,
-            "use_shuffle": true,
-            "data_len": -1
+            "catchment": "Burnett 1k",
+            "dataroot": "../data/burnett_1k",
+            "batch_size": 40,
+            "use_shuffle": false,
+            "data_len": -1,
+            "epochs": 10
         }
     },
     "model": {

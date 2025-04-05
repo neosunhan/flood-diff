@@ -32,12 +32,12 @@
             "data_len": -1
         },
         "test": {
-            "catchment": "Wollombi 1k",
-            "dataroot": "../data/wollombi_1k",
+            "catchment": "Wollombi",
+            "dataroot": "../data/wollombi",
             "batch_size": 40,
             "use_shuffle": false,
             "data_len": -1,
-            "epochs": 10
+            "epochs": 1
         }
     },
     "model": {
@@ -71,6 +71,7 @@
             "test": {
                 "schedule": "linear",
                 "n_timestep": 1000,
+                "backward_start": 50,
                 "linear_start": 1e-6,
                 "linear_end": 1e-2
             }
@@ -97,6 +98,6 @@
     },
     "test": {
         "save_results": false,
-        "thresholds": [5, 30]
+        "thresholds": []
     }
 }
