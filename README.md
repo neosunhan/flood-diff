@@ -20,7 +20,7 @@ After downloading the model checkpoints, edit the appropriate variables in the c
 "vae_state": "/path/to/pretrained/vae",
 "vae_dem_state": "/path/to/pretrained/dem/vae"
 ```
-Do not include the `_gen.pth`/`_opt.pth` in the path to the pretrained LDM, the parser will autorimatically detect both files as long as they are in the same directory.
+Do not include the `_gen.pth`/`_opt.pth` in the path to the pretrained LDM, the parser will automatically detect both files as long as they are in the same directory.
 
 ## Requirements
 Python 3.10.12+
