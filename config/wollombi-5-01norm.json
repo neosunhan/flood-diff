@@ -30,12 +30,12 @@
             "data_len": -1
         },
         "test": {
-            "catchment": "Wollombi 1k",
-            "dataroot": "../data/wollombi_1k",
+            "catchment": "Chowilla 1k",
+            "dataroot": "../data/chowilla_1k",
             "batch_size": 40,
             "use_shuffle": false,
             "data_len": -1,
-            "epochs": 1
+            "epochs": 10
         }
     },
     "model": {
@@ -91,6 +91,6 @@
     },
     "test": {
         "save_results": false,
-        "threshold": []
+        "thresholds": []
     }
 }

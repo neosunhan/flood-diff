@@ -2,6 +2,8 @@
     "name": "chowilla-5-01norm",
     "phase": "train",
     "distributed": false,
+    "amp": true,
+    "latent": false,
     "path": {
         "log": "logs",
         "tb_logger": "tb_logger",
@@ -15,7 +17,9 @@
             "dem_max_value": 440,
             "dem_min_value": -20,
             "norm_min": 0,
-            "norm_max": 1
+            "norm_max": 1,
+            "channels": 1,
+            "image_size": 512
         },
         "train": {
             "catchment": "Chowilla",
@@ -26,11 +30,12 @@
             "data_len": -1
         },
         "test": {
-            "catchment": "Wollombi 1k",
-            "dataroot": "../data/wollombi_1k",
-            "batch_size": 8,
-            "use_shuffle": true,
-            "data_len": -1
+            "catchment": "Chowilla 1k",
+            "dataroot": "../data/chowilla_1k",
+            "batch_size": 40,
+            "use_shuffle": false,
+            "data_len": -1,
+            "epochs": 10
         }
     },
     "model": {
@@ -70,7 +75,6 @@
         },
         "diffusion": {
             "image_size": 512,
-            "channels": 1,
             "loss_type": "l1",
             "conditional": true 
         }
@@ -83,18 +87,10 @@
         "optimizer": {
             "type": "adam",
             "lr": 1e-6
-        },
-        "ema_scheduler": {
-            "step_start_ema": 5000,
-            "update_ema_every": 1,
-            "ema_decay": 0.9999
         }
     },
     "test": {
         "save_results": false,
-        "threshold": 5
-    },
-    "wandb": {
-        "project": "no_project"
+        "thresholds": []
     }
 }
