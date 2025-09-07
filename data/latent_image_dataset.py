@@ -4,7 +4,7 @@ import json
 import torch
 
 class LatentImageDataset(Dataset):
-    def __init__(self, low_res_folder, high_res_folder, dem_folder, transform=None, data_len=-1):
+    def __init__(self, low_res_folder, high_res_folder, dem_folder, transform=None, data_len=-1, dem=True):
         self.low_res_folder = low_res_folder
         self.high_res_folder = high_res_folder
         self.dem_folder = dem_folder
@@ -13,20 +13,25 @@ class LatentImageDataset(Dataset):
         if data_len != -1:
             data_len = min(data_len, len(self.filenames))
             self.filenames = self.filenames[:data_len]
+        self.dem = dem
 
     def __len__(self):
         return len(self.filenames)
     
     def __getitem__(self, idx):
-        high_res_path = os.path.join(self.high_res_folder, self.filenames[idx])
         low_res_path = os.path.join(self.low_res_folder, self.filenames[idx])
-        get_dem_name = self.filenames[idx].split("_")
-        dem_name = get_dem_name[0] + "_" + get_dem_name[1] + "_DEM.pt"
-        dem_path = os.path.join(self.dem_folder, dem_name)
-
         low_res_image = torch.load(low_res_path)
+        high_res_path = os.path.join(self.high_res_folder, self.filenames[idx])
         high_res_image = torch.load(high_res_path)
-        dem_image = torch.load(dem_path)
+
+        if self.dem:
+            get_dem_name = self.filenames[idx].split("_")
+            dem_name = get_dem_name[0] + "_" + get_dem_name[1] + "_DEM.pt"
+            dem_path = os.path.join(self.dem_folder, dem_name)
+            dem_image = torch.load(dem_path)
+        else:
+            dem_image = None
+
         profile = None
 
         if self.transform:

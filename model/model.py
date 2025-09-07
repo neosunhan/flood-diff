@@ -15,8 +15,9 @@ class DDPM(BaseModel):
         # define network and load pretrained models
         gen, (vae, vae_dem) = networks.define_generator(opt)
         self.netG = self.set_device(gen)
-        if vae is not None and vae_dem is not None:
+        if vae is not None:
             vae = self.set_device(vae)
+        if vae_dem is not None:
             vae_dem = self.set_device(vae_dem)
         self.schedule_phase = None
         self.saved_checkpoints = []

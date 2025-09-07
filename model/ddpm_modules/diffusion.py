@@ -2,7 +2,6 @@ import torch
 from torch import nn
 from functools import partial
 import numpy as np
-from tqdm import tqdm
 
 
 def make_beta_schedule(schedule, n_timestep, linear_start=1e-6, linear_end=1e-2):
@@ -20,6 +19,7 @@ class GaussianDiffusion(nn.Module):
         denoise_fn,
         loss_type='l1',
         conditional=True,
+        dem=True,
     ):
         super().__init__()
         self.denoise_fn = denoise_fn
@@ -27,6 +27,7 @@ class GaussianDiffusion(nn.Module):
         self.loss_type = loss_type
         self.vae = None
         self.vae_dem = None
+        self.dem = dem
 
     def set_loss(self, device):
         if self.loss_type == 'l1':
@@ -38,16 +39,15 @@ class GaussianDiffusion(nn.Module):
         
     def load_vae(self, vae, vae_dem, vae_checkpoint, vae_dem_checkpoint):
         self.vae = vae
-        self.vae_dem = vae_dem
-
         vae_state = torch.load(vae_checkpoint, weights_only=True)
         self.vae.load_state_dict(vae_state["model_state_dict"])
-
-        vae_dem_state = torch.load(vae_dem_checkpoint, weights_only=True)
-        self.vae_dem.load_state_dict(vae_dem_state["model_state_dict"])
-
         self.vae.requires_grad_(False)
-        self.vae_dem.requires_grad_(False)
+
+        if self.dem:
+            self.vae_dem = vae_dem
+            vae_dem_state = torch.load(vae_dem_checkpoint, weights_only=True)
+            self.vae_dem.load_state_dict(vae_dem_state["model_state_dict"])
+            self.vae_dem.requires_grad_(False)
 
     def set_new_noise_schedule(self, schedule_opt, device):
         to_torch = partial(torch.tensor, dtype=torch.float32, device=device)
@@ -123,7 +123,9 @@ class GaussianDiffusion(nn.Module):
     @torch.no_grad()
     def super_resolution(self, lr_img, dem):
         lr_img, _, _ = self.vae.encode(lr_img)
-        dem, _, _ = self.vae_dem.encode(dem)
+        if self.dem:
+            dem, _, _ = self.vae_dem.encode(dem)
+
         if self.backward_start is None:
             backward_start = self.num_timesteps
             noise_img = torch.randn_like(lr_img)
@@ -135,7 +137,10 @@ class GaussianDiffusion(nn.Module):
 
         for t in reversed(range(backward_start)):
             t_tensor = torch.tensor(t, dtype=torch.long).repeat(lr_img.shape[0]).to(lr_img.device)
-            input_unet = torch.cat([noise_img, lr_img, dem], dim=1).to(lr_img.device)
+            if self.dem:
+                input_unet = torch.cat([noise_img, lr_img, dem], dim=1).to(lr_img.device)
+            else:
+                input_unet = torch.cat([noise_img, lr_img], dim=1).to(lr_img.device)
             noise_pred = self.denoise_fn(input_unet, t_tensor)
             noise_img = self.sample_prev_timestep(noise_img.detach(), noise_pred, t)
 
@@ -144,12 +149,17 @@ class GaussianDiffusion(nn.Module):
         
 
     def forward(self, x, *args, **kwargs):
-        hr_img, lr_img, dem, = x['HR'], x['SR'], x['DEM']
+        hr_img, lr_img = x['HR'], x['SR']
+        if self.dem:
+            dem = x['DEM']
 
         noise = torch.randn_like(hr_img)
         t = torch.randint(self.num_timesteps, (hr_img.shape[0],)).to(hr_img.device)
         noisy_images = self.add_noise(hr_img, noise, t)
 
-        input_unet = torch.cat([noisy_images, lr_img, dem], dim=1)
+        if self.dem:
+            input_unet = torch.cat([noisy_images, lr_img, dem], dim=1)
+        else:
+            input_unet = torch.cat([noisy_images, lr_img], dim=1)
         noise_pred = self.denoise_fn(input_unet, t)
         return self.loss_func(noise_pred, noise)

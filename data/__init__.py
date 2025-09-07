@@ -26,13 +26,14 @@ def create_dataloader(dataset, dataset_opt, phase):
         raise NotImplementedError(f'Dataloader [{phase}] is not found.')
 
 
-def create_dataset(dataset_opt, phase, meta, latent=False):
+def create_dataset(dataset_opt, phase, meta, latent=False, dem=True):
     if latent:
         dataset = LatentImageDataset(
             low_res_folder=os.path.join(dataset_opt["dataroot"], f"{phase}_lr"),
             high_res_folder=os.path.join(dataset_opt["dataroot"], f"{phase}_hr"),
             dem_folder=os.path.join(dataset_opt["dataroot"], "cropped_dems"),
-            data_len=dataset_opt["data_len"]
+            data_len=dataset_opt["data_len"],
+            dem=dem
         )
     else:
         dataset = FloodDepthDatasetWithDEM(

@@ -186,16 +186,16 @@ if __name__ == "__main__":
 
     # dataset
     if args.phase == 'train':
-        train_set = Data.create_dataset(opt['datasets']['train'], 'train', opt["datasets"]["meta"], opt["latent"])
+        train_set = Data.create_dataset(opt['datasets']['train'], 'train', opt["datasets"]["meta"], opt["latent"], opt["dem"])
         train_loader = Data.create_dataloader(train_set, opt['datasets']['train'], 'train')
         if opt["latent"]:
             valid_loader = None
         else:
-            valid_set = Data.create_dataset(opt['datasets']['valid'], 'test', opt["datasets"]["meta"], opt["latent"])
+            valid_set = Data.create_dataset(opt['datasets']['valid'], 'test', opt["datasets"]["meta"], opt["latent"], opt["dem"])
             valid_loader = Data.create_dataloader(valid_set, opt['datasets']['valid'], 'test')
 
     elif args.phase == 'test':
-        test_set = Data.create_dataset(opt['datasets']['test'], 'test', opt["datasets"]["meta"], latent=False)
+        test_set = Data.create_dataset(opt['datasets']['test'], 'test', opt["datasets"]["meta"], latent=False, dem=opt["dem"])
         test_loader = Data.create_dataloader(test_set, opt['datasets']['test'], 'test')
     logger.info('Initial Dataset Finished')
 

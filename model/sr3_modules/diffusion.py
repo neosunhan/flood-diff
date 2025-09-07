@@ -34,6 +34,7 @@ class GaussianDiffusion(nn.Module):
         denoise_fn,
         loss_type='l1',
         conditional=True,
+        dem=True,
    ):
         super().__init__()
         self.denoise_fn = denoise_fn
