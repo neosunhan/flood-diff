@@ -20,17 +20,17 @@ class LatentImageDataset(Dataset):
     
     def __getitem__(self, idx):
         low_res_path = os.path.join(self.low_res_folder, self.filenames[idx])
-        low_res_image = torch.load(low_res_path)
+        low_res_image = torch.load(low_res_path, weights_only=False)
         high_res_path = os.path.join(self.high_res_folder, self.filenames[idx])
-        high_res_image = torch.load(high_res_path)
+        high_res_image = torch.load(high_res_path, weights_only=False)
 
         if self.dem:
             get_dem_name = self.filenames[idx].split("_")
             dem_name = get_dem_name[0] + "_" + get_dem_name[1] + "_DEM.pt"
             dem_path = os.path.join(self.dem_folder, dem_name)
-            dem_image = torch.load(dem_path)
+            dem_image = torch.load(dem_path, weights_only=False)
         else:
-            dem_image = None
+            dem_image = torch.tensor(0)  # place holder, not used
 
         profile = None
 
