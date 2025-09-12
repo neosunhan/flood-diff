@@ -92,7 +92,7 @@
     },
     "test": {
         "save_results": true,
-        "threshold": 5
+        "thresholds": [5]
     },
     "wandb": {
         "project": "no_project"

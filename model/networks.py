@@ -100,14 +100,14 @@ def define_generator(opt):
     vae, vae_dem = None, None
     if opt["latent"] and opt["phase"] == 'test':
         vae = autoencoder.VAE()
-        if model_opt['dem']:
+        if opt['dem']:
             vae_dem = autoencoder.VAE()
         
     net_generator = diffusion.GaussianDiffusion(
         model,
         loss_type=model_opt['diffusion']['loss_type'],
         conditional=model_opt['diffusion']['conditional'],
-        dem=model_opt['dem'],
+        dem=opt['dem'],
     )
 
     if opt['phase'] == 'train':
