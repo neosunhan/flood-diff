@@ -10,7 +10,7 @@
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": null
+        "resume_state": "coogee-5-01norm/checkpoint/I100000_E86"
     },
     "datasets": {
         "meta": {
@@ -89,7 +89,7 @@
         }
     },
     "train": {
-        "n_iter": 100000,
+        "n_iter": 300000,
         "val_freq": 5e4,
         "save_checkpoint_freq": 5e4,
         "print_freq": 1000,
