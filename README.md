@@ -34,7 +34,7 @@ pip install -r requirements.txt
 ## Config
 Different configuration options for training and testing of models are specified in a json file and can be passed into the training/testing command via a command-line argument. The `config` directory contains config files for reference, including examples of a [standard diffusion model](config/wollombi-5-01norm.json) and a [latent diffusion model](config/wollombi-trnf.json). 
 
-2 diffusion model architectures are available in this codebase, adapted from the [SR3](https://arxiv.org/abs/2104.07636) and [DDPM](https://arxiv.org/abs/2006.11239) papers. The desired model architecture can be selected using the `which_model_G` variable in the config file. It is recommended to use the sr3 architecture for standard diffusion models and the ddpm architecture for latent diffusion models.
+2 diffusion model architectures are available in this codebase, adapted from the [SR3](https://arxiv.org/abs/2104.07636) and [DDPM](https://arxiv.org/abs/2006.11239) papers. The desired model architecture can be selected using the `which_model_G` variable in the config file. It is recommended to use the `sr3` architecture for standard diffusion models and the `ddpm` architecture for latent diffusion models.
 
 ## Catchment data structure
 Catchment data should be stored in this folder structure:
