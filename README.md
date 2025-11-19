@@ -77,5 +77,20 @@ python sr.py -p test -c config.json -output-dir path/to/output/dir
 ```
 The super-resolution model outputs will be saved in the output directory if the corresponding option is set in the config file.
 
+## Citation
+If you use any of the code provided in this repository or the models provided, please cite the following paper:
+```
+@misc{neo_2025_flood_ldm,
+    title={Flood-LDM: Generalizable Latent Diffusion Models for rapid and accurate zero-shot High-Resolution Flood Mapping}, 
+    author={Sun Han Neo and Sachith Seneviratne and Herath Mudiyanselage Viraj Vidura Herath and Abhishek Saha and Sanka Rasnayaka and Lucy Amanda Marshall},
+    year={2025},
+    month=nov,
+    eprint={2511.14033},
+    archivePrefix={arXiv},
+    primaryClass={cs.CV},
+    url={https://arxiv.org/abs/2511.14033}, 
+}
+```
+
 ## Acknowledgements
 Code was adapted from [this implementation](https://github.com/Janspiry/Image-Super-Resolution-via-Iterative-Refinement/tree/master) of [Image Super-Resolution via Iterative Refinement](https://arxiv.org/pdf/2104.07636)
