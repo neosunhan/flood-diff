@@ -13,9 +13,9 @@ This section contains the latent diffusion model checkpoints. `_gen.pth` files c
 
 | Training Catchment | CG-FG MSE | SR-FG-MSE | % change | Download |
 | :----------------: | :-------: | :-------: | :------: | :------: |
-| Wollombi | 344.2 | 33.7 | -90.19 | [checkpoint](https://drive.google.com/drive/folders/1lu39Zfs-wA01czTXvnoOOI5LSeClRZk2?usp=sharing) |
-| Burnett | 5957.4 | 731.2 | -87.73 | [checkpoint](https://drive.google.com/drive/folders/1mp4n1uPkRVhe27OpUUnkoE726Wx2agYL?usp=sharing) |
-| Chowilla | 158.7 | 16.8 | -89.40 | [checkpoint](https://drive.google.com/drive/folders/1m5hnVxXkf6R8kkpJbeKljij_TqobRqSf?usp=sharing) |
+| Wollombi | 344.2 | 33.7 | -90.20 | [checkpoint](https://drive.google.com/drive/folders/1lu39Zfs-wA01czTXvnoOOI5LSeClRZk2?usp=sharing) |
+| Burnett | 5957.4 | 723.0 | -87.86 | [checkpoint](https://drive.google.com/drive/folders/1mp4n1uPkRVhe27OpUUnkoE726Wx2agYL?usp=sharing) |
+| Chowilla | 158.7 | 17.4 | -89.07 | [checkpoint](https://drive.google.com/drive/folders/1m5hnVxXkf6R8kkpJbeKljij_TqobRqSf?usp=sharing) |
 
 After downloading the model checkpoints, edit the appropriate variables in the config file:
 ```json
